@@ -359,7 +359,25 @@ Final Response
   ↓
 END
 ```
-
+```
+Frontend
+   ↓
+NestJS
+   ↓
+FastAPI Route
+   ↓
+Service
+   ↓
+LangChain Chain
+   ↓
+Prompt
+   ↓
+LLM
+   ↓
+Parser
+   ↓
+Structured Response
+```
 ---
 
 # Structured Tool Calling
@@ -852,6 +870,33 @@ The Phase 1 AI service returns a deterministic streamed response. This preserves
 - LCEL,
 - structured outputs,
 - parsers.
+
+---
+
+# Phase 2 Implementation
+
+The AI service now routes core chat requests through LangChain primitives while keeping the Phase 1 streaming contract intact.
+
+- Prompt template: `ai-service/app/prompts/core_chat.py`
+- LCEL chain: `ai-service/app/chains/core_chat.py`
+- Structured schema: `ai-service/app/schemas/engineering_response.py`
+- JSON parser: `ai-service/app/parsers/engineering_response.py`
+
+The current chain uses Gemini when `GEMINI_API_KEY` is set. When the key is blank, it falls back to a deterministic local model simulator. This makes the app runnable without API keys, while still exercising the same LangChain contracts that Gemini uses:
+
+```txt
+ChatPromptTemplate
+      ↓
+Gemini model or local RunnableLambda adapter
+      ↓
+JsonOutputParser(Pydantic schema)
+      ↓
+Markdown response formatter
+      ↓
+SSE token stream
+```
+
+`POST /ai/execute-workflow` now returns both `result` markdown and `structuredOutput` JSON. `POST /ai/execute-workflow/stream` continues to stream markdown tokens through NestJS to the React UI.
 
 ---
 

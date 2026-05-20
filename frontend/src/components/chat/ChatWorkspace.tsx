@@ -13,7 +13,7 @@ export function ChatWorkspace() {
   }, [conversation?.messages]);
 
   return (
-    <main className="grid min-h-screen bg-paper text-ink lg:grid-cols-[280px_1fr]">
+<main className="grid h-screen overflow-hidden bg-paper text-ink lg:grid-cols-[280px_1fr]">
       <aside className="hidden border-r border-ink/10 bg-white/70 p-5 lg:block">
         <div className="mb-8 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-md bg-moss text-white">

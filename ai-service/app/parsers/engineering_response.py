@@ -1,0 +1,6 @@
+from langchain_core.output_parsers import JsonOutputParser
+
+from app.schemas.engineering_response import EngineeringAssistantResponse
+
+
+engineering_response_parser = JsonOutputParser(pydantic_object=EngineeringAssistantResponse)

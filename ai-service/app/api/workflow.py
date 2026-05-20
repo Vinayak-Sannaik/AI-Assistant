@@ -4,7 +4,8 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.services.core_chat import stream_core_chat_response
+from app.chains.core_chat import format_engineering_response
+from app.services.core_chat import build_ai_error_response, run_core_chat_workflow, stream_core_chat_response
 
 router = APIRouter()
 
@@ -28,14 +29,19 @@ async def execute_workflow_stream(request: WorkflowRequest) -> StreamingResponse
 
 @router.post("/execute-workflow")
 async def execute_workflow(request: WorkflowRequest) -> dict[str, object]:
-    response = ""
-    async for token in stream_core_chat_response(request.query):
-        response += token
+    status = "completed"
+    try:
+        structured_response = await run_core_chat_workflow(request.query)
+    except Exception as error:
+        status = "failed"
+        structured_response = build_ai_error_response(error)
+    response = format_engineering_response(structured_response)
 
     return {
-        "status": "completed",
+        "status": status,
         "result": response,
-        "steps": [{"name": "core_chat", "status": "completed"}],
+        "structuredOutput": structured_response,
+        "steps": structured_response["steps"],
         "toolsUsed": [],
         "conversationId": request.conversation_id,
         "workflowType": request.workflow_type,

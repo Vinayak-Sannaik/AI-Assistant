@@ -18,7 +18,7 @@ export function ChatComposer({ disabled, onSend }: ChatComposerProps) {
   }
 
   return (
-    <form className="flex gap-3 border-t border-ink/10 bg-paper/95 p-4" onSubmit={handleSubmit}>
+    <form className="sticky bottom-0 z-10 flex gap-3 border-t border-ink/10 bg-paper/95 p-4 backdrop-blur">
       <textarea
         className="min-h-12 flex-1 resize-none rounded-md border border-ink/15 bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/20"
         placeholder="Ask for an architecture review, repository analysis, or engineering plan..."
