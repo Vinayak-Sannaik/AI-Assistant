@@ -12,6 +12,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.chains.core_chat import core_chat_chain, format_engineering_response
 
+from app.tools.filesystem import ( read_file_tool, list_files_tool )
 
 # shared workflow memory structure shared between nodes.
 # Every node:
@@ -25,6 +26,60 @@ class CoreChatState(TypedDict, total=False):
     markdown: str
     workflow_events: list[dict[str, str]]
     error: str
+    # workflow state must carry tool execution data
+    tool_name: str
+    tool_input:dict[str, Any]
+    tool_output: dict[str, Any]
+
+async def tool_node(
+    state: CoreChatState,
+) -> CoreChatState:
+
+    events = append_event(
+        state,
+        "tool_executor",
+        "started",
+    )
+
+    tool_name = state.get(
+        "tool_name",
+    )
+
+    tool_input = state.get(
+        "tool_input",
+        {},
+    )
+
+    if tool_name == "read_file":
+
+        tool_output = read_file_tool(
+            tool_input.get("path", ""),
+        )
+    elif tool_name == "list_files":
+        
+        tool_output = list_files_tool(
+            tool_input.get("path", ""),
+        )
+    else:
+
+        tool_output = {
+            "success": False,
+            "error": "Unknown tool.",
+        }
+
+    return {
+        **state,
+
+        "tool_output": tool_output,
+
+        "workflow_events": [
+            *events,
+            {
+                "node": "tool_executor",
+                "status": "completed",
+            },
+        ],
+    }
 
 
 def append_event(
@@ -49,6 +104,65 @@ async def planner_node(state: CoreChatState) -> CoreChatState:
         "planner",
         "started",
     )
+
+    query = state["query"].lower()
+
+    if ( query.startswith("read ") and ".py" in query ):
+        file_path = (
+            query.replace(
+                "read",
+                "",
+            )
+            .strip()
+        )
+
+        return {
+            **state,
+
+            "status": "completed",
+
+            "tool_name": "read_file",
+
+            "tool_input": {
+                "path": file_path,
+            },
+
+            "workflow_events": [
+                *started_events,
+                {
+                    "node": "planner",
+                    "status": "completed",
+                },
+            ],
+        }
+    elif ( query.startswith("list") ):
+        dir_path = (
+            query.replace(
+                "list",
+                "",
+            )
+            .strip()
+        )
+
+        return {
+            **state,
+
+            "status": "completed",
+
+            "tool_name": "list_files",
+
+            "tool_input": {
+                "path": dir_path,
+            },
+
+            "workflow_events": [
+                *started_events,
+                {
+                    "node": "planner",
+                    "status": "completed",
+                },
+            ],
+        }
 
     try:
         structured_response = await core_chat_chain.ainvoke(
@@ -95,9 +209,70 @@ async def writer_node(state: CoreChatState) -> CoreChatState:
         "started",
     )
 
-    markdown = format_engineering_response(
-        state["structured_response"]
-    )
+    if state.get("tool_output"):
+        tool_name = state.get(
+        "tool_name",
+        )
+
+        tool_output = state[
+            "tool_output"
+        ]    
+
+        # TOOL FAILED
+        if not tool_output.get(
+            "success",
+        ):
+
+            markdown = (
+                "Tool execution failed:\n\n"
+                f"{tool_output.get('error')}"
+            )
+        
+        # READ FILE TOOL
+        elif (
+            tool_name == "read_file"
+        ):
+
+            markdown = (
+                "# File Content\n\n"
+                "```\n"
+                f"{tool_output.get('content', '')}\n"
+                "```"
+            )
+
+        # LIST FILES TOOL
+        elif (
+            tool_name == "list_files"
+        ):
+
+            files = tool_output.get(
+                "files",
+                [],
+            )
+
+            rendered_files = "\n".join(
+                [
+                    f"- [{item['type']}] {item['name']}"
+                    for item in files
+                ]
+            )
+
+            markdown = (
+                "# Directory Listing\n\n"
+                f"{rendered_files}"
+            )
+
+        # UNKNOWN TOOL
+        else:
+
+            markdown = (
+                "Unknown tool output."
+            )
+
+    else:
+        markdown = format_engineering_response(
+            state["structured_response"]
+        )
 
     completed_state: CoreChatState = {
         **state,
@@ -113,6 +288,14 @@ async def writer_node(state: CoreChatState) -> CoreChatState:
 
     return completed_state
 
+def route_after_planner(
+    state: CoreChatState,
+) -> str:
+
+    if state.get("tool_name"):
+        return "tool"
+
+    return "writer"
 
 # create workflow runtime
 def build_core_chat_graph():
@@ -120,9 +303,15 @@ def build_core_chat_graph():
 
     graph.add_node("planner", planner_node)
     graph.add_node("writer", writer_node)
+    graph.add_node("tool_executor", tool_node)
 
     graph.add_edge(START, "planner")
-    graph.add_edge("planner", "writer")
+    graph.add_conditional_edges("planner",route_after_planner,
+        {
+            "tool": "tool_executor",
+            "writer": "writer",
+        },
+    )
     graph.add_edge("writer", END)
 
     return graph.compile()
@@ -209,6 +398,25 @@ async def stream_core_chat_graph(
     }
 
     yield planner_completed_event
+
+    if state.get("tool_name"):
+        tool_started_event = {
+            "type": "workflow",
+            "node": "tool_executor",
+            "status": "started",
+        }
+
+        yield tool_started_event
+
+        state = await tool_node(state)
+
+        tool_completed_event = {
+            "type": "workflow",
+            "node": "tool_executor",
+            "status": "completed",
+        }
+
+        yield tool_completed_event
 
     #
     # WRITER STARTED
