@@ -1,6 +1,6 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
+import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Observable } from "rxjs";
 
 interface WorkflowRequest {
   workflowType: string;
@@ -8,16 +8,40 @@ interface WorkflowRequest {
   conversationId: string;
 }
 
+// STREAM EVENTS
+export interface WorkflowStreamEvent {
+  type: "workflow";
+  node: string;
+  status: string;
+}
+
+export interface TokenStreamEvent {
+  type: "token";
+  content: string;
+}
+
+export interface DoneStreamEvent {
+  type: "done";
+  workflowRun?: unknown;
+}
+
+export type StreamEvent =
+  | WorkflowStreamEvent
+  | TokenStreamEvent
+  | DoneStreamEvent;
+
 @Injectable()
 export class AiGatewayService {
   private readonly aiServiceUrl: string;
 
   constructor(configService: ConfigService) {
-    this.aiServiceUrl = configService.get<string>('AI_SERVICE_URL') ?? 'http://localhost:8000';
+    this.aiServiceUrl =
+      configService.get<string>("AI_SERVICE_URL") ?? "http://localhost:8000";
   }
 
-  streamWorkflow(payload: WorkflowRequest): Observable<string> {
-    return new Observable<string>((subscriber) => {
+  // STREAM WORKFLOW
+  streamWorkflow(payload: WorkflowRequest): Observable<StreamEvent> {
+    return new Observable<StreamEvent>((subscriber) => {
       const controller = new AbortController();
       let pendingChunk = '';
 
@@ -31,21 +55,36 @@ export class AiGatewayService {
       })
         .then(async (response) => {
           if (!response.ok || !response.body) {
-            throw new ServiceUnavailableException(`AI service returned ${response.status}`);
+            throw new ServiceUnavailableException(
+              `AI service returned ${response.status}`,
+            );
           }
 
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
 
+          // READ SSE STREAM
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            pendingChunk = this.readSseChunk(pendingChunk + chunk, (token) => subscriber.next(token));
+
+            if (done) {
+              break;
+            }
+
+            const chunk = decoder.decode(value, {
+              stream: true,
+            });
+
+            pendingChunk = this.readSseChunk(pendingChunk + chunk, (event) =>
+              subscriber.next(event),
+            );
           }
 
+          // FINAL PENDING CHUNK
           if (pendingChunk) {
-            this.readSseChunk(`${pendingChunk}\n`, (token) => subscriber.next(token));
+            this.readSseChunk(`${pendingChunk}\n`, (event) =>
+              subscriber.next(event),
+            );
           }
 
           subscriber.complete();
@@ -56,17 +95,38 @@ export class AiGatewayService {
           }
         });
 
-      return () => controller.abort();
+      // CLEANUP
+      return () => {
+        controller.abort();
+      };
     });
   }
 
-  private readSseChunk(chunk: string, onToken: (token: string) => void): string {
-    const lines = chunk.split('\n');
-    const pendingLine = lines.pop() ?? '';
+  // SSE PARSER
+  private readSseChunk(
+    chunk: string,
+    onEvent: (event: StreamEvent) => void,
+  ): string {
+    const lines = chunk.split("\n");
+
+    const pendingLine = lines.pop() ?? "";
+
+    let currentEventType = "message";
 
     for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        onToken(JSON.parse(line.slice(6)) as string);
+      // SSE EVENT TYPE
+      if (line.startsWith("event: ")) {
+        currentEventType = line.slice(7).trim()
+        continue;
+      }
+      // SSE DATA
+      if (line.startsWith("data: ")) {
+        const parsed = JSON.parse(line.slice(6)) as StreamEvent;
+
+        // Preserve SSE event type
+        parsed.type = currentEventType as StreamEvent["type"];
+
+        onEvent(parsed);
       }
     }
 

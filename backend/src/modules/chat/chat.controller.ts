@@ -4,6 +4,7 @@ import { AiGatewayService } from '../ai/ai-gateway.service';
 import { ChatService } from './chat.service';
 import { ChatMessage, Conversation } from './chat.types';
 
+// DTOs
 interface CreateConversationDto {
   message: string;
 }
@@ -11,54 +12,109 @@ interface CreateConversationDto {
 interface AddMessageDto {
   content: string;
 }
-
+// SSE Event Returned To Frontend
 interface MessageEvent {
   type: string;
   data: string;
 }
 
-@Controller('chat')
+// AI Stream Events
+interface WorkflowEvent {
+  type: "workflow";
+  node: string;
+  status: string;
+}
+
+interface TokenEvent {
+  type: "token";
+  content: string;
+}
+
+interface DoneEvent {
+  type: "done";
+  workflowRun?: unknown;
+}
+
+type StreamEvent = WorkflowEvent | TokenEvent | DoneEvent;
+
+@Controller("chat")
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly aiGateway: AiGatewayService,
   ) {}
 
-  @Post('conversations')
+  // CREATE CONVERSATION
+  @Post("conversations")
   createConversation(@Body() body: CreateConversationDto): Conversation {
     return this.chatService.createConversation(body.message);
   }
 
-  @Post('conversations/:conversationId/messages')
-  addMessage(@Param('conversationId') conversationId: string, @Body() body: AddMessageDto): ChatMessage {
+  // ADD USER MESSAGE
+  @Post("conversations/:conversationId/messages")
+  addMessage(
+    @Param("conversationId")
+    conversationId: string,
+
+    @Body()
+    body: AddMessageDto,
+  ): ChatMessage {
     return this.chatService.addUserMessage(conversationId, body.content);
   }
 
-  @Sse('conversations/:conversationId/stream')
-  stream(@Param('conversationId') conversationId: string): Observable<MessageEvent> {
+  // STREAM AI RESPONSE
+  @Sse("conversations/:conversationId/stream")
+  stream(
+    @Param("conversationId")
+    conversationId: string,
+  ): Observable<MessageEvent> {
+    // Latest user message
     const latestMessage = this.chatService.getLatestUserMessage(conversationId);
-    const tokenStream = this.aiGateway.streamWorkflow({
+
+    // AI orchestration stream
+    const eventStream = this.aiGateway.streamWorkflow({
       conversationId,
       query: latestMessage.content,
-      workflowType: 'core_chat',
+      workflowType: "core_chat",
     });
 
+    // SSE observable
     return new Observable<MessageEvent>((subscriber) => {
-      let fullResponse = '';
+      let fullResponse = "";
+
       const subscription = concat(
-        tokenStream.pipe(
-          map((token) => {
-            fullResponse += token;
-            return { type: 'token', data: JSON.stringify(token) };
+        // STREAM EVENTS
+        eventStream.pipe(
+          map((event: StreamEvent) => {
+            // Accumulate only token text
+            if (event.type === "token") {
+              fullResponse += event.content;
+            }
+            // Forward original SSE event type
+            return {
+              type: event.type,
+              data: JSON.stringify(event),
+            };
           }),
         ),
+        // FINAL DONE EVENT
         defer(() => {
-          const savedMessage = this.chatService.addAssistantMessage(conversationId, fullResponse);
-          return of({ type: 'done', data: JSON.stringify(savedMessage) });
+          const savedMessage = this.chatService.addAssistantMessage(
+            conversationId,
+            fullResponse,
+          );
+
+          return of({
+            type: "done",
+            data: JSON.stringify(savedMessage),
+          });
         }),
       ).subscribe(subscriber);
 
-      return () => subscription.unsubscribe();
+      // Cleanup
+      return () => {
+        subscription.unsubscribe();
+      };
     });
   }
 }

@@ -63,11 +63,13 @@ def _classify_intent(query: str) -> str:
 
 def build_core_chat_chain():
     settings = get_settings()
+    max_retries=0
     if settings.gemini_api_key:
         model = ChatGoogleGenerativeAI(
             model=settings.gemini_model,
             google_api_key=settings.gemini_api_key,
             temperature=0,
+            max_retries=0,
         )
         #LangChain Expression Language. 
         return CORE_CHAT_PROMPT | model | engineering_response_parser

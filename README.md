@@ -910,6 +910,36 @@ SSE token stream
 
 ---
 
+# Phase 3 Implementation
+
+The AI service now wraps the Phase 2 LCEL chain in a minimal LangGraph workflow:
+
+```txt
+START
+  ↓
+planner
+  ↓
+writer
+  ↓
+END
+```
+
+- Graph implementation: `ai-service/app/workflows/core_chat.py`
+- `planner` invokes the existing LangChain/LCEL chain and captures provider/configuration errors.
+- `writer` formats the structured response into markdown for the existing SSE chat stream.
+- `POST /ai/execute-workflow` includes `structuredOutput.workflowRun` with graph name, status, node events, and error type when applicable.
+
+Success criteria for Phase 3:
+
+- The workflow runs through LangGraph, not a direct chain call.
+- `structuredOutput.workflowRun.events` shows `start`, `planner`, and `writer` state transitions.
+- The existing React → NestJS → FastAPI SSE stream still emits markdown and `done`.
+- With a bad Gemini key/model, the graph returns `status: failed` and a visible configuration response instead of disconnecting.
+
+Tradeoff: this is intentionally a two-node graph shell, not full multi-agent orchestration. It makes LangGraph testable now without introducing speculative agent/tool behavior before Phase 4 and Phase 5.
+
+---
+
 # Phase 4 — Tool Calling
 
 ## Goals
