@@ -21,14 +21,15 @@ from app.workflows.core_chat import (
     core_chat_chain,
     format_engineering_response,
 )
-
 from app.chains.core_chat import format_rag_response
 from langgraph.graph import (
     START,
     END,
     StateGraph,
 )
+from app.schemas.engineering_response import RagResponse
 
+from app.providers.llm import llm
 
 class AgenticRagState(
     TypedDict,
@@ -288,77 +289,121 @@ async def writer_node(
     state: AgenticRagState,
 ) -> AgenticRagState:
 
-    query = state.get(
-        "query",
-        "",
-    )
+    try:
 
-    documents = state.get(
-        "retrieved_documents",
-        [],
-    )
-
-    validation_score = state.get(
-        "validation_score",
-        0.0,
-    )
-
-    #
-    # NO VALID GROUNDING
-    #
-
-    if validation_score <= 0:
-
-        markdown = (
-            "# Retrieval Failed\n\n"
-            "No grounded documents "
-            "were available."
+        query = state.get(
+            "query",
+            "",
         )
 
+        documents = state.get(
+            "retrieved_documents",
+            [],
+        )
+
+        validation_score = state.get(
+            "validation_score",
+            0.0,
+        )
+        # NO VALID GROUNDING
+        if validation_score <= 0:
+
+            return {
+                **state,
+
+                "status": "failed",
+
+                "markdown": (
+                    "# Retrieval Failed\n\n"
+                    "No grounded documents "
+                    "were available."
+                ),
+
+                "workflow_events": [
+                    *state.get(
+                        "workflow_events",
+                        [],
+                    ),
+                    {
+                        "node": "writer",
+                        "status": "failed",
+                    },
+                ],
+            }
+
+        # BUILD RETRIEVED CONTEXT
+        context = "\n\n".join(
+            [
+                (
+                    f"Source: "
+                    f"{doc['source']}\n\n"
+                    f"{doc['content']}"
+                )
+                for doc in documents
+            ]
+        )
+
+        # STRUCTURED OUTPUT MODEL
+        structured_llm = llm.with_structured_output(
+            RagResponse
+        )
+
+        # GENERATE STRUCTURED RESPONSE
+        response = await structured_llm.ainvoke(
+            f"""
+            You are a senior staff software engineer.
+
+            Analyze the retrieved code deeply.
+
+            Focus on:
+            - architectural role
+            - design decisions
+            - extensibility
+            - engineering tradeoffs
+            - how components interact
+            - why the implementation exists
+
+            Do not just summarize code.
+
+            User Question:
+            {query}
+
+            Retrieved Context:
+            {context}
+            """
+        )
+
+        # CONVERT STRUCTURED RESPONSE TO MARKDOWN
+        markdown = format_rag_response(
+            response
+        )
+
+
+        # RETURN FINAL STATE
         return {
             **state,
+
+            "status": "completed",
+
             "markdown": markdown,
+
+            "workflow_events": [
+                *state.get(
+                    "workflow_events",
+                    [],
+                ),
+                {
+                    "node": "writer",
+                    "status": "completed",
+                },
+            ],
         }
 
-    #
-    # BUILD CONTEXT
-    #
-
-    context = "\n\n".join(
-        [
-            (
-                f"Source: "
-                f"{doc['source']}\n\n"
-                f"{doc['content']}"
-            )
-            for doc in documents
-        ]
-    )
-
-    #
-    # GROUNDED GENERATION
-    #
-
-    try:
-        final_response = await core_chat_chain.ainvoke(
-            {
-                "query": (
-                    "Answer the user's question "
-                    "using ONLY the retrieved "
-                    "documents.\n\n"
-                    f"User Question:\n"
-                    f"{query}\n\n"
-                    f"Retrieved Context:\n"
-                    f"{context}"
-                )
-            }
-        )
-        
     except Exception as error:
 
-        markdown = (
-            "# Writer Failure\n\n"
-            f"{str(error)}"
+        print(
+            "Writer node failed:",
+            str(error),
         )
 
         return {
@@ -368,51 +413,22 @@ async def writer_node(
 
             "error": str(error),
 
-            "markdown": markdown,
-        }
-
-    markdown = (
-        format_rag_response(
-            final_response
-        )
-    )
-
-    # Source-backed responses
-    sources = "\n".join(
-        [
-            f"- {doc['source']}"
-            for doc in documents
-        ]
-    )
-
-    markdown += (
-        "\n\n---\n\n"
-        "# Sources\n\n"
-        f"{sources}"
-    )
-
-    return {
-        **state,
-
-        "final_response": (
-            final_response
-        ),
-
-        "markdown": markdown,
-
-        "workflow_events": [
-            *state.get(
-                "workflow_events",
-                [],
+            "markdown": (
+                "# Writer Error\n\n"
+                f"{str(error)}"
             ),
-            {
-                "node": "writer",
-                "status": "completed",
-            },
-        ],
-    }
 
-
+            "workflow_events": [
+                *state.get(
+                    "workflow_events",
+                    [],
+                ),
+                {
+                    "node": "writer",
+                    "status": "failed",
+                },
+            ],
+        }
 
 def build_agentic_rag_graph():
     graph = StateGraph( AgenticRagState)
@@ -496,11 +512,8 @@ async def stream_agentic_rag_graph(
         "",
     )
 
-    for word in markdown.split():
-
+    for line in markdown.splitlines(keepends=True):
         yield {
             "type": "token",
-            "content": (
-                word + " "
-            ),
+            "content": line,
         }

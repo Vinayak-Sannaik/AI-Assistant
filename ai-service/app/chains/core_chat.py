@@ -2,12 +2,12 @@ import json
 from typing import Any
 
 from langchain_core.runnables import RunnableLambda
-from langchain_google_genai import ChatGoogleGenerativeAI
+from app.providers.llm import llm
 
-from app.core.settings import get_settings
 from app.parsers.engineering_response import engineering_response_parser
 from app.prompts.core_chat import CORE_CHAT_PROMPT
 from app.schemas.engineering_response import EngineeringAssistantResponse
+from app.schemas.engineering_response import RagResponse
 
 
 def _simulate_structured_model(prompt_value: Any) -> str:
@@ -62,20 +62,12 @@ def _classify_intent(query: str) -> str:
     return "architecture_assistant"
 
 def build_core_chat_chain():
-    settings = get_settings()
-    max_retries=0
-    if settings.gemini_api_key:
-        model = ChatGoogleGenerativeAI(
-            model=settings.gemini_model,
-            google_api_key=settings.gemini_api_key,
-            temperature=0,
-            max_retries=0,
-        )
-        #LangChain Expression Language. 
-        return CORE_CHAT_PROMPT | model | engineering_response_parser
-
+    # REAL MODEL
+    if llm:
+        return CORE_CHAT_PROMPT | llm | engineering_response_parser
+    
+    # FALLBACK SIMULATION
     return CORE_CHAT_PROMPT | RunnableLambda(_simulate_structured_model) | engineering_response_parser
-
 
 core_chat_chain = build_core_chat_chain()
 
@@ -96,47 +88,66 @@ def format_engineering_response(response: dict[str, Any]) -> str:
     return "\n\n".join(section for section in sections if section)
 
 def format_rag_response(
-    response: dict,
-    documents: list,
+    response: RagResponse,
 ) -> str:
 
-    markdown = (
-        f"## Overview\n\n"
-        f"{response.get('summary', '')}\n\n"
-    )
+    sections = [
+        (
+            "## Overview\n\n"
+            f"{response.overview}"
+        ),
 
-    steps = response.get(
-        "steps",
-        [],
-    )
+        (
+            "## Architecture Role\n\n"
+            f"{response.architecture_role}"
+        ),
 
-    if steps:
-
-        markdown += (
-            "## Key Points\n\n"
-        )
-
-        for step in steps:
-
-            markdown += (
-                f"- **{step['name']}**: "
-                f"{step['detail']}\n"
+        (
+            "## Key Technical Points\n\n"
+            + "\n".join(
+                [
+                    f"- {point}"
+                    for point in response.key_technical_points
+                ]
             )
+        ),
 
-    if documents:
-
-        markdown += (
-            "\n\n---\n\n"
-            "### Sources\n\n"
-        )
-
-        for doc in documents:
-
-            markdown += (
-                f"- `{doc['source']}`\n"
+        (
+            "## Design Decisions\n\n"
+            + "\n".join(
+                [
+                    f"- {decision}"
+                    for decision in response.design_decisions
+                ]
             )
+        ),
 
-    return markdown
+        (
+            "## Extensibility Notes\n\n"
+            + "\n".join(
+                [
+                    f"- {note}"
+                    for note in response.extensibility_notes
+                ]
+            )
+        ),
+
+        (
+            "## Sources\n\n"
+            + "\n".join(
+                [
+                    f"- `{source}`"
+                    for source in response.sources
+                ]
+            )
+        ),
+    ]
+
+    return "\n\n".join(
+        section
+        for section in sections
+        if section
+    )
 
 def _format_list(title: str, items: list[str]) -> str:
     if not items:
