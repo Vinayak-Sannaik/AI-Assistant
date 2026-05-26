@@ -30,6 +30,8 @@ class CoreChatState(TypedDict, total=False):
     tool_name: str
     tool_input:dict[str, Any]
     tool_output: dict[str, Any]
+    # add LLM analyzer for tool output
+    analysis_response: dict[str, Any]
 
 async def tool_node(
     state: CoreChatState,
@@ -84,6 +86,85 @@ async def tool_node(
         ],
     }
 
+async def analyzer_node(
+    state: CoreChatState,
+) -> CoreChatState:
+
+    print("Analyzer node received state:")
+    print(state)
+    events = append_event(
+        state,
+        "analyzer",
+        "started",
+    )
+
+    tool_output = state.get(
+        "tool_output",
+        {},
+    )
+
+    tool_name = state.get(
+        "tool_name",
+    )
+
+    #
+    # ONLY ANALYZE SUCCESSFUL TOOLS
+    #
+
+    if not tool_output.get(
+        "success",
+    ):
+
+        return {
+            **state,
+
+            "workflow_events": [
+                *events,
+                {
+                    "node": "analyzer",
+                    "status": "skipped",
+                },
+            ],
+        }
+
+    #
+    # BUILD ANALYSIS CONTEXT
+    #
+
+    analysis_input = {
+        "tool_name": tool_name,
+        "tool_output": tool_output,
+        "query": state["query"],
+    }
+
+    #
+    # CALL LLM
+    #
+
+    analysis_response = await core_chat_chain.ainvoke(
+        {
+            "query": (
+                "Analyze this tool output:\n\n"
+                f"{analysis_input}"
+            )
+        }
+    )
+
+    return {
+        **state,
+
+        "analysis_response": (
+            analysis_response
+        ),
+
+        "workflow_events": [
+            *events,
+            {
+                "node": "analyzer",
+                "status": "completed",
+            },
+        ],
+    }
 
 def append_event(
     state: CoreChatState,
@@ -102,6 +183,9 @@ def append_event(
 
 
 async def planner_node(state: CoreChatState) -> CoreChatState:
+
+    print("Planner node received state:")
+    print(state)
     started_events = append_event(
         state,
         "planner",
@@ -206,13 +290,27 @@ async def planner_node(state: CoreChatState) -> CoreChatState:
 
 
 async def writer_node(state: CoreChatState) -> CoreChatState:
+    print("Writer node received state:")
+    print(state)
     started_events = append_event(
         state,
         "writer",
         "started",
     )
 
-    if state.get("tool_output"):
+    if state.get(
+    "analysis_response",
+    ):
+
+        markdown = (
+            format_engineering_response(
+                state[
+                    "analysis_response"
+                ]
+            )
+        )
+
+    elif state.get("tool_output"):
         tool_name = state.get(
         "tool_name",
         )
@@ -307,6 +405,7 @@ def build_core_chat_graph():
     graph.add_node("planner", planner_node)
     graph.add_node("writer", writer_node)
     graph.add_node("tool_executor", tool_node)
+    graph.add_node("analyzer", analyzer_node)
 
     graph.add_edge(START, "planner")
     graph.add_conditional_edges("planner",route_after_planner,
@@ -315,10 +414,8 @@ def build_core_chat_graph():
             "writer": "writer",
         },
     )
-    graph.add_edge(
-    "tool_executor",
-    "analyzer",
-    )
+    graph.add_edge("tool_executor","analyzer")
+    graph.add_edge("analyzer","writer")
     graph.add_edge("writer", END)
 
     return graph.compile()
@@ -425,6 +522,26 @@ async def stream_core_chat_graph(
 
         yield tool_completed_event
 
+    analyzer_started_event = {
+        "type": "workflow",
+        "node": "analyzer",
+        "status": "started",
+    }
+
+    yield analyzer_started_event
+
+    state = await analyzer_node(
+        state,
+    )
+
+    analyzer_completed_event = {
+        "type": "workflow",
+        "node": "analyzer",
+        "status": "completed",
+    }
+
+    yield analyzer_completed_event
+    
     #
     # WRITER STARTED
     #
