@@ -939,14 +939,39 @@ Success criteria for Phase 3:
 Tradeoff: this is intentionally a two-node graph shell, not full multi-agent orchestration. It makes LangGraph testable now without introducing speculative agent/tool behavior before Phase 4 and Phase 5.
 
 ---
+# Phase 4 — Tool Calling & LangGraph Orchestration
 
-# Phase 4 — Tool Calling
+This phase transformed the project from:
 
-## Goals
-- filesystem tools,
-- DB tools,
-- structured execution.
+```txt
+AI Chat App
+```
 
+into:
+
+```txt
+AI Execution Runtime
+```
+
+---
+
+# Final Workflow Architecture
+
+```txt
+User Query
+    ↓
+Planner Node
+    ↓
+Conditional Routing
+    ↓
+Tool Executor
+    ↓
+Renderer
+    ↓
+Writer
+    ↓
+Streaming Response
+```
 ---
 
 # Phase 5 — Multi-Agent Coordination

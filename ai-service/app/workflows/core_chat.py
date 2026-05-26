@@ -12,7 +12,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.chains.core_chat import core_chat_chain, format_engineering_response
 
-from app.tools.filesystem import ( read_file_tool, list_files_tool )
+from app.tools.registry import TOOLS
 
 # shared workflow memory structure shared between nodes.
 # Every node:
@@ -50,22 +50,25 @@ async def tool_node(
         {},
     )
 
-    if tool_name == "read_file":
+    tool_function = TOOLS.get(
+    tool_name,
+    )
 
-        tool_output = read_file_tool(
-            tool_input.get("path", ""),
-        )
-    elif tool_name == "list_files":
-        
-        tool_output = list_files_tool(
-            tool_input.get("path", ""),
-        )
-    else:
+    if not tool_function:
 
         tool_output = {
             "success": False,
-            "error": "Unknown tool.",
+            "error": (
+                f"Unknown tool: "
+                f"{tool_name}"
+            ),
         }
+
+    else:
+
+        tool_output = tool_function(
+            **tool_input,
+        )
 
     return {
         **state,
@@ -311,6 +314,10 @@ def build_core_chat_graph():
             "tool": "tool_executor",
             "writer": "writer",
         },
+    )
+    graph.add_edge(
+    "tool_executor",
+    "analyzer",
     )
     graph.add_edge("writer", END)
 
