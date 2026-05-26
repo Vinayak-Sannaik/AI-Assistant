@@ -8,7 +8,11 @@ warnings.filterwarnings(
     module="langgraph.checkpoint.base",
 )
 
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import (
+    START,
+    END,
+    StateGraph,
+)
 
 from app.chains.core_chat import core_chat_chain, format_engineering_response
 
@@ -185,7 +189,7 @@ def append_event(
 async def planner_node(state: CoreChatState) -> CoreChatState:
 
     print("Planner node received state:")
-    print(state)
+    # print(state)
     started_events = append_event(
         state,
         "planner",
@@ -291,7 +295,7 @@ async def planner_node(state: CoreChatState) -> CoreChatState:
 
 async def writer_node(state: CoreChatState) -> CoreChatState:
     print("Writer node received state:")
-    print(state)
+    # print(state)
     started_events = append_event(
         state,
         "writer",
@@ -589,7 +593,7 @@ async def stream_core_chat_graph(
     #
 
     yield {
-        "type": "done",
+        "type": "workflow_complete",
         "workflowRun": {
             "name": "core_chat_graph",
             "status": state.get("status", "completed"),

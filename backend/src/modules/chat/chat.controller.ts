@@ -1,8 +1,9 @@
-import { Body, Controller, Param, Post, Sse } from '@nestjs/common';
-import { Observable, concat, defer, map, of } from 'rxjs';
-import { AiGatewayService } from '../ai/ai-gateway.service';
-import { ChatService } from './chat.service';
-import { ChatMessage, Conversation } from './chat.types';
+import { Body, Controller, Param, Post, Sse } from "@nestjs/common";
+import { Observable, concat, defer, map, of } from "rxjs";
+import { AiGatewayService } from "../ai/ai-gateway.service";
+import { ChatService } from "./chat.service";
+import { ChatMessage, Conversation } from "./chat.types";
+import { selectWorkflowType } from "./helper";
 
 // DTOs
 interface CreateConversationDto {
@@ -75,7 +76,7 @@ export class ChatController {
     const eventStream = this.aiGateway.streamWorkflow({
       conversationId,
       query: latestMessage.content,
-      workflowType: "core_chat",
+      workflowType: selectWorkflowType(latestMessage.content),
     });
 
     // SSE observable

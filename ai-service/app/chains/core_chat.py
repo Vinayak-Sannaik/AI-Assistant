@@ -95,6 +95,48 @@ def format_engineering_response(response: dict[str, Any]) -> str:
     ]
     return "\n\n".join(section for section in sections if section)
 
+def format_rag_response(
+    response: dict,
+    documents: list,
+) -> str:
+
+    markdown = (
+        f"## Overview\n\n"
+        f"{response.get('summary', '')}\n\n"
+    )
+
+    steps = response.get(
+        "steps",
+        [],
+    )
+
+    if steps:
+
+        markdown += (
+            "## Key Points\n\n"
+        )
+
+        for step in steps:
+
+            markdown += (
+                f"- **{step['name']}**: "
+                f"{step['detail']}\n"
+            )
+
+    if documents:
+
+        markdown += (
+            "\n\n---\n\n"
+            "### Sources\n\n"
+        )
+
+        for doc in documents:
+
+            markdown += (
+                f"- `{doc['source']}`\n"
+            )
+
+    return markdown
 
 def _format_list(title: str, items: list[str]) -> str:
     if not items:

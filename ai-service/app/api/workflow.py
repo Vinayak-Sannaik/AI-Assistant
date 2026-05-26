@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 from app.chains.core_chat import format_engineering_response
 from app.services.core_chat import run_core_chat_workflow, stream_core_chat_response
 from app.workflows.core_chat import stream_core_chat_graph
+from app.services.workflow_router import WORKFLOW_RUNNERS
+from app.services.workflow_router import WORKFLOW_STREAMS
 
 router = APIRouter()
 
@@ -26,7 +28,12 @@ async def execute_workflow_stream(
 
     async def event_stream():
 
-        async for event in stream_core_chat_graph(
+        stream_runner = (
+            WORKFLOW_STREAMS[
+                request.workflow_type
+            ]
+        )
+        async for event in stream_runner(
             request.query
         ):
 
@@ -45,7 +52,10 @@ async def execute_workflow_stream(
 
 @router.post("/execute-workflow")
 async def execute_workflow(request: WorkflowRequest) -> dict[str, object]:
-    structured_response = await run_core_chat_workflow(request.query)
+    workflow_runner = WORKFLOW_RUNNERS.get(
+        request.workflow_type,
+    )
+    structured_response = await workflow_runner(request.query)
     response = format_engineering_response(structured_response)
     workflow_run = structured_response.get("workflowRun", {})
 
