@@ -6,6 +6,16 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   isStreaming?: boolean;
+  
+  status?:
+  | "streaming"
+  | "waiting_human_review"
+  | "completed"
+  | "failed";
+
+  workflowId?: string;
+
+  reviewReason?: string;
 }
 
 export interface Conversation {

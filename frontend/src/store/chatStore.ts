@@ -4,6 +4,7 @@ import {
   createConversation,
   postMessage,
   streamAssistantResponse,
+  streamResumeWorkflow,
 } from "../services/chatApi";
 
 import type { ChatMessage, Conversation } from "../types/chat";
@@ -26,6 +27,8 @@ interface ChatState {
   error: string | null;
   isStreaming: boolean;
   sendMessage: (content: string) => Promise<void>;
+  resumeWorkflow: (workflowId: string, messageId: string) => Promise<void>;
+  rejectReview: (messageId: string) => void;
 }
 
 // CREATE STREAMING MESSAGE
@@ -37,6 +40,12 @@ function createStreamingMessage(): ChatMessage {
     createdAt: new Date().toISOString(),
     isStreaming: true,
   };
+}
+
+interface HumanReviewEvent {
+  type: "human_review_required";
+  workflow_id: string;
+  reason: string;
 }
 
 // STORE
@@ -80,6 +89,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // OPEN SSE STREAM
       const source = streamAssistantResponse(conversation.id);
+      // Local flag to distinguish intentional workflow suspension from network errors
+      let interruptedForReview = false;
 
       // WORKFLOW EVENTS
       source.addEventListener("workflow", (event) => {
@@ -89,6 +100,46 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         // console.log("WORKFLOW EVENT", parsed);
       });
+
+      // HUMAN REVIEW REQUIRED EVENT
+      source.addEventListener("human_review_required", (event) => {
+        const parsed = JSON.parse(
+          (event as MessageEvent<string>).data,
+        ) as HumanReviewEvent;
+        // Mark that the stream was intentionally interrupted for human review
+        interruptedForReview = true;
+
+        // Stop global streaming indicator before closing the stream
+        set({ isStreaming: false });
+
+        set((state) => {
+          if (!state.conversation) {
+            return state;
+          }
+
+          return {
+            conversation: {
+              ...state.conversation,
+
+              messages: state.conversation.messages.map((message) =>
+                message.id === streamingMessage.id
+                  ? {
+                      ...message,
+
+                      status: "waiting_human_review",
+                      workflowId: parsed.workflow_id,
+                      reviewReason: parsed.reason,
+                    }
+                  : message,
+              ),
+            },
+          };
+        });
+
+        // Close the SSE connection now that we've recorded the paused state
+        source.close();
+      });
+
       // TOKEN EVENTS
       source.addEventListener("token", (event) => {
         const parsed = JSON.parse(
@@ -132,10 +183,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           isStreaming: false,
         });
       });
-      // Error handling for SSE
+      // Error handling for SSE - ignore errors if we intentionally interrupted for review
       source.onerror = () => {
-        // console.error("SSE ERROR");
+        if (interruptedForReview) {
+          // intentional suspension of workflow; do not treat as an error
+          return;
+        }
 
+        // console.error("SSE ERROR");
         source.close();
 
         set({
@@ -157,5 +212,127 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isStreaming: false,
       });
     }
+  },
+  async resumeWorkflow(workflowId, messageId) {
+    if (!workflowId) return;
+
+    set({
+      error: null,
+      isStreaming: true,
+    });
+
+    try {
+      // Mark message as streaming and remove review UI metadata
+      set((state) => {
+        if (!state.conversation) return state;
+
+        return {
+          conversation: {
+            ...state.conversation,
+
+            messages: state.conversation.messages.map((m) =>
+              m.id === messageId
+                ? {
+                    ...m,
+                    status: "streaming",
+                    isStreaming: true,
+                    reviewReason: undefined,
+                    workflowId: undefined,
+                  }
+                : m,
+            ),
+          },
+        };
+      });
+
+      const conversation = get().conversation;
+      if (!conversation) {
+        set({ error: "No active conversation to resume.", isStreaming: false });
+        return;
+      }
+
+      const source = streamResumeWorkflow(conversation.id, workflowId, true);
+
+      source.addEventListener("token", (event) => {
+        const parsed = JSON.parse((event as MessageEvent<string>).data) as TokenEvent;
+
+        if (parsed.type !== "token") return;
+
+        set((state) => {
+          if (!state.conversation) return state;
+
+          return {
+            conversation: {
+              ...state.conversation,
+
+              messages: state.conversation.messages.map((m) =>
+                m.id === messageId ? { ...m, content: m.content + parsed.content } : m,
+              ),
+            },
+          };
+        });
+      });
+
+      source.addEventListener("done", () => {
+        source.close();
+
+        set((state) => {
+          if (!state.conversation) return state;
+
+          return {
+            conversation: {
+              ...state.conversation,
+              messages: state.conversation.messages.map((m) =>
+                m.id === messageId ? { ...m, isStreaming: false, status: "completed" } : m,
+              ),
+            },
+            isStreaming: false,
+          };
+        });
+      });
+
+      source.onerror = () => {
+        source.close();
+
+        set({
+          error: "The assistant stream disconnected. Try approving again.",
+          isStreaming: false,
+        });
+      };
+    } catch (error) {
+      console.error(error);
+
+      set({
+        error: error instanceof Error ? error.message : "Unable to resume the workflow.",
+        isStreaming: false,
+      });
+    }
+  },
+  rejectReview(messageId) {
+    // Local-only rejection: mark the assistant message as failed and clear streaming state
+    set({ error: null, isStreaming: false });
+
+    set((state) => {
+      if (!state.conversation) return state;
+
+      return {
+        conversation: {
+          ...state.conversation,
+
+          messages: state.conversation.messages.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  status: "failed",
+                  isStreaming: false,
+                  content: "Request rejected by reviewer.",
+                  workflowId: undefined,
+                  reviewReason: undefined,
+                }
+              : m,
+          ),
+        },
+      };
+    });
   },
 }));

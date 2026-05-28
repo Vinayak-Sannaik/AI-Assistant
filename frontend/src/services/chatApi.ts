@@ -18,3 +18,13 @@ export async function postMessage(conversationId: string, content: string): Prom
 export function streamAssistantResponse(conversationId: string): EventSource {
   return new EventSource(`${API_BASE_URL}/chat/conversations/${conversationId}/stream`);
 }
+
+export function streamResumeWorkflow(conversationId: string, workflowId: string, humanApproved = true): EventSource {
+  const params = new URLSearchParams();
+  params.set("workflowId", workflowId);
+  params.set("humanApproved", humanApproved ? "true" : "false");
+
+  return new EventSource(
+    `${API_BASE_URL}/chat/conversations/${encodeURIComponent(conversationId)}/resume-stream?${params.toString()}`,
+  );
+}
