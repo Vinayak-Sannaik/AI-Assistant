@@ -102,6 +102,110 @@ export class AiGatewayService {
     });
   }
 
+  streamResumeWorkflow(
+  workflowId: string,
+  humanApproved: boolean,
+): Observable<StreamEvent> {
+
+  return new Observable<StreamEvent>(
+    (subscriber) => {
+
+      const controller =
+        new AbortController();
+
+      let pendingChunk = "";
+
+      const url = new URL(
+        `${this.aiServiceUrl}/ai/resume-workflow/stream`,
+      );
+
+      url.searchParams.set(
+        "workflow_id",
+        workflowId,
+      );
+
+      url.searchParams.set(
+        "human_approved",
+        String(humanApproved),
+      );
+
+      void fetch(url.toString(), {
+        method: "GET",
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+
+          if (
+            !response.ok ||
+            !response.body
+          ) {
+
+            throw new ServiceUnavailableException(
+              `AI service returned ${response.status}`,
+            );
+          }
+
+          const reader =
+            response.body.getReader();
+
+          const decoder =
+            new TextDecoder();
+
+          while (true) {
+
+            const {
+              done,
+              value,
+            } = await reader.read();
+
+            if (done) {
+              break;
+            }
+
+            const chunk =
+              decoder.decode(value, {
+                stream: true,
+              });
+
+            pendingChunk =
+              this.readSseChunk(
+                pendingChunk + chunk,
+                (event) =>
+                  subscriber.next(
+                    event,
+                  ),
+              );
+          }
+
+          if (pendingChunk) {
+
+            this.readSseChunk(
+              `${pendingChunk}\n`,
+              (event) =>
+                subscriber.next(event),
+            );
+          }
+
+          subscriber.complete();
+        })
+        .catch((error) => {
+
+          if (
+            !controller.signal.aborted
+          ) {
+
+            subscriber.error(error);
+          }
+        });
+
+      return () => {
+        controller.abort();
+      };
+    },
+  );
+}
+
+
   // SSE PARSER
   private readSseChunk(
     chunk: string,

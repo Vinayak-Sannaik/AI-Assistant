@@ -9,6 +9,7 @@ from app.services.core_chat import run_core_chat_workflow, stream_core_chat_resp
 from app.workflows.core_chat import stream_core_chat_graph
 from app.services.workflow_router import WORKFLOW_RUNNERS
 from app.services.workflow_router import WORKFLOW_STREAMS
+from app.workflows.agentic_rag import resume_agentic_rag_graph, stream_resume_agentic_rag_graph
 
 router = APIRouter()
 
@@ -19,6 +20,61 @@ class WorkflowRequest(BaseModel):
     conversation_id: str = Field(alias="conversationId")
 
     model_config = {"populate_by_name": True}
+
+class ResumeWorkflowRequest( BaseModel):
+    workflow_id: str
+    human_approved: bool
+
+@router.post("/resume-workflow")
+async def resume_workflow(
+    request: ResumeWorkflowRequest,
+):
+    print(request)
+
+    state = await resume_agentic_rag_graph(
+        workflow_id=request.workflow_id,
+        human_approved=request.human_approved,
+    )
+
+    return state
+
+@router.get(
+    "/resume-workflow/stream"
+)
+async def resume_workflow_stream(
+    workflow_id: str,
+    human_approved: bool,
+) -> StreamingResponse:
+
+    async def event_stream():
+
+        async for event in (
+            stream_resume_agentic_rag_graph(
+                workflow_id=workflow_id,
+                human_approved=(
+                    human_approved
+                ),
+            )
+        ):
+
+            event_type = event.get(
+                "type",
+                "message",
+            )
+
+            yield (
+                f"event: "
+                f"{event_type}\n"
+
+                f"data: "
+                f"{json.dumps(event)}\n\n"
+            )
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+    )
+
 
 
 @router.post("/execute-workflow/stream")

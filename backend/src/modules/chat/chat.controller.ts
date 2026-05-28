@@ -1,5 +1,7 @@
-import { Body, Controller, Param, Post, Sse } from "@nestjs/common";
+import { Body, Controller, Param, Post, Query, Sse } from "@nestjs/common";
+
 import { Observable, concat, defer, map, of } from "rxjs";
+
 import { AiGatewayService } from "../ai/ai-gateway.service";
 import { ChatService } from "./chat.service";
 import { ChatMessage, Conversation } from "./chat.types";
@@ -31,12 +33,17 @@ interface TokenEvent {
   content: string;
 }
 
+interface HumanReviewEvent {
+  type: "human_review_required";
+  reason: string;
+}
+
 interface DoneEvent {
   type: "done";
   workflowRun?: unknown;
 }
 
-type StreamEvent = WorkflowEvent | TokenEvent | DoneEvent;
+type StreamEvent = WorkflowEvent | TokenEvent | HumanReviewEvent | DoneEvent;
 
 @Controller("chat")
 export class ChatController {
@@ -80,8 +87,11 @@ export class ChatController {
     });
 
     // SSE observable
+
     return new Observable<MessageEvent>((subscriber) => {
       let fullResponse = "";
+
+      let requiresHumanReview = false;
 
       const subscription = concat(
         // STREAM EVENTS
@@ -91,15 +101,40 @@ export class ChatController {
             if (event.type === "token") {
               fullResponse += event.content;
             }
-            // Forward original SSE event type
+            // HUMAN REVIEW REQUIRED
+            if (event.type === "human_review_required") {
+              requiresHumanReview = true;
+            }
+
+            // Forward original SSE event
             return {
               type: event.type,
               data: JSON.stringify(event),
             };
           }),
         ),
-        // FINAL DONE EVENT
+
+        // FINAL EVENT
+
         defer(() => {
+          // WORKFLOW PAUSED
+          //
+
+          if (requiresHumanReview) {
+            console.log("Pausing workflow for human review");
+            return of({
+              type: "waiting_human_review",
+
+              data: JSON.stringify({
+                status: "paused",
+              }),
+            });
+          }
+
+          //
+          // NORMAL COMPLETION
+          //
+
           const savedMessage = this.chatService.addAssistantMessage(
             conversationId,
             fullResponse,
@@ -113,6 +148,69 @@ export class ChatController {
       ).subscribe(subscriber);
 
       // Cleanup
+      return () => {
+        subscription.unsubscribe();
+      };
+    });
+  }
+
+  // RESUME STREAM (placeholder route)
+  @Sse("conversations/:conversationId/resume-stream")
+  resumeStream(
+    @Param("conversationId")
+    conversationId: string,
+
+    @Query("workflowId")
+    workflowId: string,
+
+    @Query("humanApproved")
+    humanApproved: string,
+  ): Observable<MessageEvent> {
+    const eventStream = this.aiGateway.streamResumeWorkflow(
+      workflowId,
+      humanApproved === "true",
+    );
+
+    return new Observable<MessageEvent>((subscriber) => {
+      let fullResponse = "";
+
+      const subscription = concat(
+        //
+        // STREAM EVENTS
+        //
+
+        eventStream.pipe(
+          map((event: StreamEvent) => {
+            if (event.type === "token") {
+              fullResponse += event.content;
+            }
+
+            return {
+              type: event.type,
+
+              data: JSON.stringify(event),
+            };
+          }),
+        ),
+
+        //
+        // DONE EVENT
+        //
+
+        defer(() => {
+          const savedMessage = this.chatService.addAssistantMessage(
+            conversationId,
+            fullResponse,
+          );
+
+          return of({
+            type: "done",
+
+            data: JSON.stringify(savedMessage),
+          });
+        }),
+      ).subscribe(subscriber);
+
       return () => {
         subscription.unsubscribe();
       };
