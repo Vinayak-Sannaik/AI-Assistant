@@ -35,6 +35,7 @@ from app.schemas.engineering_response import RagResponse
 from langgraph.types import ( interrupt, Command)
 
 from app.providers.llm import llm
+from app.mcp.filesystem_client import FilesystemMcpClient
 
 HIGH_RISK_TERMS = [
     "delete",
@@ -84,6 +85,8 @@ class AgenticRagState(
     ]
     markdown: str
 
+    intent: str
+
     # ERROR
     error: str
 
@@ -107,6 +110,47 @@ async def planner_node(
     query = state[
         "query"
     ].lower()
+    
+    intent = "explain"
+
+    if any(
+        word in query
+        for word in [
+            "delete",
+            "remove",
+        ]
+    ):
+        intent = "delete"
+    
+    elif any(
+    word in query
+    for word in [
+        "refactor",
+        "improve",
+        "optimize",
+    ]
+    ):
+        intent = "refactor"
+
+    elif any(
+        word in query
+        for word in [
+            "create",
+            "generate",
+            "build",
+        ]
+    ):
+        intent = "create"
+
+    elif any(
+        word in query
+        for word in [
+            "explain",
+            "analyze",
+            "describe",
+        ]
+    ):
+        intent = "explain"
 
     requires_retrieval = any(
         keyword in query
@@ -140,6 +184,8 @@ async def planner_node(
         "retrieval_query": (
             retrieval_query
         ),
+
+        "intent": intent,
 
         "workflow_events": [
             *state.get(
@@ -225,6 +271,14 @@ def human_review_node(
         "human_approved": True,
     }
 
+def route_after_human_review(
+    state: AgenticRagState,
+):
+    return state.get(
+        "intent",
+        "explain",
+    )
+
 ACTION_WORDS = [
     "explain",
     "read",
@@ -250,7 +304,10 @@ async def retriever_node(
 ) -> AgenticRagState:
     
     print("Retriever node received state:")
-    print(state)
+    # print(state)
+
+    retrieved_documents = []
+    client = FilesystemMcpClient()
 
     retrieval_query = state.get(
         "retrieval_query",
@@ -265,46 +322,22 @@ async def retriever_node(
 
     if ".py" in retrieval_query:
 
-        # file_path = (
-        #     retrieval_query
-        #     .replace(
-        #         "Explain",
-        #         "",
-        #     )
-        #     .replace(
-        #         "explain",
-        #         "",
-        #     )
-        #     .strip()
-        # )
         file_path = extract_file_path(
             retrieval_query,
         )
 
-        path = Path(file_path)
+        result = await client.read_file(
+            file_path,
+        )
 
-        if path.exists():
+        if result["success"]:
 
-            try:
-
-                content = (
-                    path.read_text()
-                )
-
-                retrieved_documents.append(
-                    {
-                        "source": file_path,
-                        "content": content,
-                    }
-                )
-
-            except Exception as error:
-
-                return {
-                    **state,
-                    "status": "failed",
-                    "error": str(error),
+            retrieved_documents.append(
+                {
+                    "source": file_path,
+                    "content": result["content"],
                 }
+            )
 
     return {
         **state,
@@ -540,6 +573,34 @@ async def writer_node(
             ],
         }
 
+def refactor_node(
+    state: AgenticRagState,
+):
+    print("REFACTOR NODE")
+
+    return state
+
+def explain_node(
+    state: AgenticRagState,
+):
+    print("EXPLAIN NODE")
+
+    return state
+
+def delete_node(
+    state: AgenticRagState,
+):          
+    print("DELETE NODE")
+
+    return state    
+
+def create_node(
+    state: AgenticRagState,         
+):
+    print("CREATE NODE")
+
+    return state
+
 def build_agentic_rag_graph():
     graph = StateGraph( AgenticRagState)
 
@@ -565,6 +626,26 @@ def build_agentic_rag_graph():
         human_review_node,
     )
 
+    graph.add_node(
+        "explain",
+        explain_node,
+    )
+
+    graph.add_node(
+        "refactor",
+        refactor_node,
+    )
+
+    graph.add_node(
+        "delete",
+        delete_node,
+    )
+
+    graph.add_node(
+        "create",
+        create_node,
+    )
+
     # EDGES
     graph.add_edge(
         START,
@@ -582,19 +663,50 @@ def build_agentic_rag_graph():
         "retriever",
         "validator",
     )
+
+    graph.add_conditional_edges(
+        "human_review",
+        route_after_human_review,
+        {
+            "explain": "explain",
+            "refactor": "refactor",
+            "delete": "delete",
+            "create": "create",
+        },
+    )
+    
+    graph.add_edge(
+        "explain",
+        "writer",
+    )
+
+    graph.add_edge(
+        "refactor",
+        "writer",
+    )
+
+    graph.add_edge(
+        "delete",
+        "writer",
+    )
+
+    graph.add_edge(
+        "create",
+        "writer",
+    )
     graph.add_edge(
         "validator",
         "human_review",
     )
 
-    graph.add_conditional_edges(
-        "human_review",
-        route_human_review,
-        {
-            "await_human": END,
-            "writer": "writer",
-        },
-    )
+    # graph.add_conditional_edges(
+    #     "human_review",
+    #     route_human_review,
+    #     {
+    #         "await_human": END,
+    #         "writer": "writer",
+    #     },
+    # )
     graph.add_edge(
         "writer",
         END,
