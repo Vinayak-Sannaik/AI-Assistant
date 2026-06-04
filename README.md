@@ -5,6 +5,7 @@
 AI Software Engineering Assistant is a distributed multi-agent AI platform designed to help developers automate software engineering workflows.
 
 The project focuses on:
+
 - LangChain
 - LangGraph
 - multi-agent orchestration
@@ -14,10 +15,12 @@ The project focuses on:
 - distributed AI architecture
 
 The system intentionally uses a hybrid architecture:
+
 - NestJS as the primary backend platform,
 - Python as the AI orchestration service.
 
 This mirrors real-world AI system architecture where:
+
 - Node.js/Java/Go services manage platform/backend concerns,
 - Python services handle AI/ML orchestration.
 
@@ -26,6 +29,7 @@ This mirrors real-world AI system architecture where:
 # Goals
 
 The project is designed to teach:
+
 - LangChain abstractions,
 - LangGraph workflows,
 - agent orchestration,
@@ -44,11 +48,13 @@ The project is designed to teach:
 ### Example
 
 User asks:
+
 ```txt
 Design migration strategy from monolith to microservices
 ```
 
 System:
+
 - creates execution plan,
 - retrieves architecture patterns,
 - identifies bottlenecks,
@@ -61,11 +67,13 @@ System:
 ### Example
 
 User asks:
+
 ```txt
 Analyze scalability issues in this repository
 ```
 
 System:
+
 - scans repository,
 - analyzes architecture,
 - identifies anti-patterns,
@@ -78,11 +86,13 @@ System:
 ### Example
 
 User asks:
+
 ```txt
 Generate API documentation for this module
 ```
 
 System:
+
 - reads repository files,
 - extracts API information,
 - generates markdown documentation.
@@ -94,11 +104,13 @@ System:
 ### Example
 
 User asks:
+
 ```txt
 Create deployment strategy for this application
 ```
 
 System:
+
 - decomposes tasks,
 - creates workflow plan,
 - identifies risks,
@@ -140,6 +152,7 @@ Python AI Service
 # Why Hybrid Architecture?
 
 The project intentionally separates:
+
 - platform/backend concerns,
 - AI orchestration concerns.
 
@@ -148,6 +161,7 @@ The project intentionally separates:
 # NestJS Responsibilities
 
 NestJS handles:
+
 - APIs,
 - workflow management,
 - persistence,
@@ -156,6 +170,7 @@ NestJS handles:
 - backend architecture.
 
 Python handles:
+
 - LangGraph workflows,
 - agents,
 - AI orchestration,
@@ -167,6 +182,7 @@ Python handles:
 # Why This Architecture Matters
 
 This teaches:
+
 - distributed systems,
 - service communication,
 - AI microservices,
@@ -180,6 +196,7 @@ This is significantly more valuable than building a single Python monolith.
 # Frontend Stack
 
 # Framework
+
 - ReactJS
 - TypeScript
 - Vite
@@ -187,23 +204,27 @@ This is significantly more valuable than building a single Python monolith.
 ---
 
 # UI
+
 - TailwindCSS
 - shadcn/ui
 
 ---
 
 # State Management
+
 - Zustand
 
 ---
 
 # Networking
+
 - Axios
 - SSE/WebSockets
 
 ---
 
 # Visualization
+
 - React Flow
 - Recharts
 
@@ -214,9 +235,11 @@ This is significantly more valuable than building a single Python monolith.
 # Main Backend
 
 ## Framework
+
 - NestJS
 
 ## Responsibilities
+
 - API gateway,
 - persistence,
 - workflow state management,
@@ -228,9 +251,11 @@ This is significantly more valuable than building a single Python monolith.
 # AI Service
 
 ## Framework
+
 - FastAPI
 
 ## Responsibilities
+
 - LangChain,
 - LangGraph,
 - agents,
@@ -243,16 +268,19 @@ This is significantly more valuable than building a single Python monolith.
 # Infrastructure
 
 # Database
+
 - PostgreSQL
 
 ---
 
 # Vector Store
+
 - PGVector
 
 ---
 
 # Queue System
+
 - Redis
 
 ---
@@ -260,17 +288,20 @@ This is significantly more valuable than building a single Python monolith.
 # AI Models
 
 ## Cloud Models
+
 - OpenAI GPT models
 
 ---
 
 ## Local Models
+
 - Ollama
 - Llama models
 
 ---
 
 ## Embeddings
+
 - OpenAI embeddings
 - BGE embeddings
 
@@ -281,7 +312,9 @@ This is significantly more valuable than building a single Python monolith.
 # Agents
 
 ## Planner Agent
+
 Responsible for:
+
 - task decomposition,
 - execution planning,
 - workflow creation.
@@ -289,7 +322,9 @@ Responsible for:
 ---
 
 ## Research Agent
+
 Responsible for:
+
 - retrieval,
 - architecture lookup,
 - technical research.
@@ -297,7 +332,9 @@ Responsible for:
 ---
 
 ## Critic Agent
+
 Responsible for:
+
 - hallucination detection,
 - architectural validation,
 - risk identification.
@@ -305,7 +342,9 @@ Responsible for:
 ---
 
 ## Code Agent
+
 Responsible for:
+
 - repository analysis,
 - code inspection,
 - implementation guidance.
@@ -313,7 +352,9 @@ Responsible for:
 ---
 
 ## Writer Agent
+
 Responsible for:
+
 - formatting final output,
 - generating markdown reports,
 - summarization.
@@ -325,6 +366,7 @@ Responsible for:
 The project uses LangGraph for orchestration.
 
 ## Features
+
 - graph-based workflows,
 - branching,
 - retries,
@@ -359,6 +401,7 @@ Final Response
   ↓
 END
 ```
+
 ```
 Frontend
    ↓
@@ -378,6 +421,7 @@ Parser
    ↓
 Structured Response
 ```
+
 ---
 
 # Structured Tool Calling
@@ -387,6 +431,7 @@ Agents can invoke tools safely using structured schemas.
 # Tool Categories
 
 ## Filesystem Tools
+
 - read files,
 - scan repositories,
 - inspect folders.
@@ -394,6 +439,7 @@ Agents can invoke tools safely using structured schemas.
 ---
 
 ## Database Tools
+
 - query PostgreSQL,
 - inspect schemas,
 - analyze migrations.
@@ -401,6 +447,7 @@ Agents can invoke tools safely using structured schemas.
 ---
 
 ## Utility Tools
+
 - markdown generation,
 - JSON formatting,
 - architecture summarization.
@@ -408,6 +455,7 @@ Agents can invoke tools safely using structured schemas.
 ---
 
 ## API Tools
+
 - GitHub APIs,
 - Jira APIs,
 - Notion APIs.
@@ -417,6 +465,7 @@ Agents can invoke tools safely using structured schemas.
 # MCP Integration
 
 Supports:
+
 - filesystem MCP,
 - SQLite MCP,
 - Git MCP,
@@ -427,16 +476,19 @@ Supports:
 # MCP Use Cases
 
 ## Repository Analysis
+
 Agents inspect repositories through MCP filesystem server.
 
 ---
 
 ## Database Inspection
+
 Agents analyze schemas through MCP database tools.
 
 ---
 
 ## Git Operations
+
 Agents inspect commits and PRs through MCP Git server.
 
 ---
@@ -446,6 +498,7 @@ Agents inspect commits and PRs through MCP Git server.
 RAG exists only to support engineering workflows.
 
 # Knowledge Sources
+
 - architecture documents,
 - API specifications,
 - engineering standards,
@@ -455,6 +508,7 @@ RAG exists only to support engineering workflows.
 ---
 
 # Retrieval Features
+
 - semantic retrieval,
 - hybrid retrieval,
 - reranking,
@@ -467,16 +521,19 @@ RAG exists only to support engineering workflows.
 # Memory Types
 
 ## Conversation Memory
+
 Stores active workflow context.
 
 ---
 
 ## Episodic Memory
+
 Stores important engineering interactions.
 
 ---
 
 ## Semantic Memory
+
 Stores persistent embeddings.
 
 ---
@@ -486,6 +543,7 @@ Stores persistent embeddings.
 # 1. Chat Workspace
 
 ## Features
+
 - streaming AI responses,
 - markdown rendering,
 - syntax highlighting,
@@ -496,11 +554,13 @@ Stores persistent embeddings.
 # 2. Workflow Visualization
 
 ## Features
+
 - graph visualization,
 - workflow execution tracking,
 - agent state visualization.
 
 Use:
+
 - React Flow.
 
 ---
@@ -508,6 +568,7 @@ Use:
 # 3. Tool Execution Panel
 
 ## Features
+
 - inspect executed tools,
 - tool inputs/outputs,
 - execution logs.
@@ -517,6 +578,7 @@ Use:
 # 4. Memory Viewer
 
 ## Features
+
 - inspect stored memories,
 - memory categories,
 - vector retrieval results.
@@ -528,6 +590,7 @@ Use:
 # 1. API Gateway
 
 ## Responsibilities
+
 - frontend communication,
 - routing requests,
 - orchestrating AI service calls.
@@ -537,6 +600,7 @@ Use:
 # 2. Conversation Management
 
 ## Responsibilities
+
 - message persistence,
 - workflow history,
 - session tracking.
@@ -546,6 +610,7 @@ Use:
 # 3. Workflow State Management
 
 ## Responsibilities
+
 - workflow metadata,
 - execution status,
 - retries,
@@ -556,6 +621,7 @@ Use:
 # 4. Streaming Layer
 
 ## Responsibilities
+
 - SSE/WebSockets,
 - real-time updates,
 - workflow progress events.
@@ -567,6 +633,7 @@ Use:
 # 1. LangGraph Workflows
 
 ## Responsibilities
+
 - graph execution,
 - agent orchestration,
 - branching logic.
@@ -576,6 +643,7 @@ Use:
 # 2. LangChain Pipelines
 
 ## Responsibilities
+
 - prompts,
 - parsers,
 - retrievers,
@@ -586,6 +654,7 @@ Use:
 # 3. Agent Coordination
 
 ## Responsibilities
+
 - planner execution,
 - critic validation,
 - tool invocation.
@@ -595,6 +664,7 @@ Use:
 # 4. MCP Tool Execution
 
 ## Responsibilities
+
 - filesystem MCP,
 - Git MCP,
 - DB MCP,
@@ -646,6 +716,7 @@ POST /ai/execute-workflow
 # Future Communication Improvements
 
 Future upgrades may include:
+
 - Redis queues,
 - RabbitMQ,
 - Kafka-based orchestration.
@@ -797,6 +868,7 @@ ai-service/
 # Phase 1 — Core Chat System
 
 ## Goals
+
 - React chat UI,
 - NestJS backend,
 - FastAPI AI service,
@@ -866,6 +938,7 @@ The Phase 1 AI service returns a deterministic streamed response. This preserves
 # Phase 2 — LangChain Integration
 
 ## Goals
+
 - prompts,
 - LCEL,
 - structured outputs,
@@ -903,6 +976,7 @@ SSE token stream
 # Phase 3 — LangGraph Workflows
 
 ## Goals
+
 - graph execution,
 - planner agent,
 - writer agent,
@@ -939,6 +1013,7 @@ Success criteria for Phase 3:
 Tradeoff: this is intentionally a two-node graph shell, not full multi-agent orchestration. It makes LangGraph testable now without introducing speculative agent/tool behavior before Phase 4 and Phase 5.
 
 ---
+
 # Phase 4 — Tool Calling & LangGraph Orchestration
 
 This phase transformed the project from:
@@ -972,11 +1047,13 @@ Writer
     ↓
 Streaming Response
 ```
+
 ---
 
 # Phase 5 — Multi-Agent Coordination
 
 ## Goals
+
 - planner,
 - critic,
 - research agent,
@@ -987,15 +1064,28 @@ Streaming Response
 # Phase 6 — MCP Integration
 
 ## Goals
+
 - filesystem MCP,
 - SQLite MCP,
 - Git MCP.
+
+```Agent
+ ↓
+Retriever
+ ↓
+Filesystem MCP Client
+ ↓
+Filesystem MCP Server
+ ↓
+Tools
+```
 
 ---
 
 # Phase 7 — Memory System
 
 ## Goals
+
 - episodic memory,
 - semantic memory,
 - long-term retrieval.
@@ -1005,6 +1095,7 @@ Streaming Response
 # Phase 8 — Production Hardening
 
 ## Goals
+
 - retries,
 - tracing,
 - observability,
@@ -1015,6 +1106,7 @@ Streaming Response
 # Non-Functional Requirements
 
 # Performance
+
 - async workflows,
 - streaming responses,
 - background workers.
@@ -1022,6 +1114,7 @@ Streaming Response
 ---
 
 # Reliability
+
 - retries,
 - checkpoint recovery,
 - workflow persistence.
@@ -1031,11 +1124,13 @@ Streaming Response
 # Security
 
 Initial phase intentionally excludes:
+
 - authentication,
 - RBAC,
 - multi-tenancy.
 
 Focus remains on:
+
 - orchestration,
 - workflows,
 - AI architecture.
@@ -1045,6 +1140,7 @@ Focus remains on:
 # Future Enhancements
 
 Potential future additions:
+
 - authentication,
 - Slack integration,
 - GitHub integration,
@@ -1057,6 +1153,7 @@ Potential future additions:
 # Expected Learning Outcomes
 
 After completing this project, you should understand:
+
 - LangChain deeply,
 - LangGraph orchestration,
 - multi-agent systems,
