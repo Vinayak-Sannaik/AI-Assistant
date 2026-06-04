@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "todo-mcp": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/todo-mcp-server/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/todo-mcp-server/src/server.py"
+      ]
+    }
+  }
+}
