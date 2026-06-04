@@ -46,5 +46,7 @@ class AgenticRagState(
     repository_analysis_required: bool
     repository_context: str
 
+    repository_history_required: bool
+
     # ERROR
     error: str

@@ -13,6 +13,19 @@ async def writer_node(
             "",
         )
 
+        history_analysis = any(
+            keyword in query
+            for keyword in [
+                "history",
+                "evolution",
+                "evolved",
+                "progress",
+                "changes",
+                "commits",
+                "recent work",
+            ]
+        )
+
         documents = state.get(
             "retrieved_documents",
             [],
@@ -26,7 +39,14 @@ async def writer_node(
             "REPOSITORY CONTEXT IN WRITER NODE",
             repository_context,
         )
+        # print(
+        #     "REPOSITORY CONTEXT IN WRITER NODE--GIT HISTORY",
+        #     repository_context[
+        #         "git_history"
+        #     ]
+        # )
 
+        git_history = ""
         if repository_context:
 
             structured_llm = (
@@ -35,9 +55,40 @@ async def writer_node(
                 )
             )
 
-            response = await (
-                structured_llm.ainvoke(
-                    f"""
+            git_history = repository_context.get(
+                "git_history",
+                "",
+            )
+
+            if history_analysis:
+                print(
+                    "Performing repository history analysis based on query intent."
+                )
+
+                prompt = f"""
+                    You are a principal software architect.
+
+                    Analyze the repository evolution.
+
+                    Git History:
+                    {git_history}
+
+                    Repository Context:
+                    {repository_context}
+
+                    Provide:
+
+                    1. Major milestones
+                    2. Development progression
+                    3. Architectural evolution
+                    4. Recent focus areas
+                    5. Likely next steps
+
+                    Focus primarily on the git history.
+                    """
+            else:
+
+                prompt = f"""
                     You are a senior staff software engineer.
 
                     Analyze this repository.
@@ -61,6 +112,10 @@ async def writer_node(
                     Only use evidence present in the repository context.
                     Do not assume databases, microservices, cloud providers, or external systems unless explicitly present.
                     """
+
+            response = await (
+                structured_llm.ainvoke(
+                    prompt
                 )
             )
 

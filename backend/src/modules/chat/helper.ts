@@ -14,6 +14,15 @@ export function selectWorkflowType(
     "service",
     "module",
     "explain",
+    "project",
+    "direction",
+    "history",
+    "evolution",
+    "commit",
+    "release",
+    "technical debt",
+    "microservice",
+    "deployment",
   ];
 
   const requiresRag =

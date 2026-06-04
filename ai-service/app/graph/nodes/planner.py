@@ -66,14 +66,29 @@ async def planner_node(
     repository_analysis_required = any(
         keyword in query
         for keyword in [
-            "analyze repository",
-            "repository analysis",
+            "repository",
             "architecture",
             "deployment strategy",
             "microservice",
             "service boundaries",
             "technical debt",
             "onboarding",
+            "direction"
+        ]
+    )
+
+    repository_history_required = any(
+        keyword in query
+        for keyword in [
+            "history",
+            "evolution",
+            "evolved",
+            "progress",
+            "changes",
+            "recent",
+            "commits",
+            "direction",
+            "heading",
         ]
     )
 
@@ -86,6 +101,10 @@ async def planner_node(
     print(
     "repository_analysis_required:",
     repository_analysis_required,
+    )
+    print(
+    "repository_history_required:",
+    repository_history_required,
     )
 
     return {
@@ -103,6 +122,10 @@ async def planner_node(
 
         "repository_analysis_required": (
             repository_analysis_required
+        ),
+
+        "repository_history_required": (
+            repository_history_required
         ),
 
         "intent": intent,

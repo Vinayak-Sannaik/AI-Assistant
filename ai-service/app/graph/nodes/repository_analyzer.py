@@ -1,8 +1,13 @@
 from app.graph.state import (
     AgenticRagState,
 )
+
 from app.mcp.filesystem_client import (
     FilesystemMcpClient,
+)
+
+from app.mcp.git_client import (
+    GitMcpClient,
 )
 
 
@@ -15,14 +20,22 @@ async def repository_analyzer_node(
         state,
     )
 
-    client = FilesystemMcpClient()
+    filesystem_client = (
+        FilesystemMcpClient()
+    )
+
+    git_client = (
+        GitMcpClient()
+    )
 
     #
     # Discover root files
     #
 
-    result = await client.list_files(
-        ".",
+    result = await (
+        filesystem_client.list_files(
+            ".",
+        )
     )
 
     files = result.get(
@@ -30,29 +43,42 @@ async def repository_analyzer_node(
         [],
     )
 
+    #
+    # DISCOVER DIRECTORIES
+    #
+
     directories = [
         file["name"]
         for file in files
         if file["type"] == "directory"
     ]
 
+    #
+    # APP STRUCTURE
+    #
+
     app_structure = {}
 
     if "app" in directories:
 
-        app_result = await (
-            client.list_files(
-                "app"
+        app_structure = await (
+            filesystem_client.list_files(
+                "app",
             )
         )
 
-        app_structure = app_result
+    #
+    # ARCHITECTURE COMPONENTS
+    #
 
     architecture_components = []
 
     app_dirs = [
         item["name"]
-        for item in app_structure["files"]
+        for item in app_structure.get(
+            "files",
+            [],
+        )
         if item["type"] == "directory"
     ]
 
@@ -115,7 +141,7 @@ async def repository_analyzer_node(
         try:
 
             content = await (
-                client.read_file(
+                filesystem_client.read_file(
                     file_name,
                 )
             )
@@ -138,7 +164,15 @@ async def repository_analyzer_node(
             )
 
     #
-    # Build repository context
+    # GIT HISTORY
+    #
+
+    git_history = await (
+        git_client.git_log()
+    )
+
+    #
+    # BUILD REPOSITORY CONTEXT
     #
 
     repository_context = {
@@ -156,6 +190,12 @@ async def repository_analyzer_node(
 
         "architecture_components":
             architecture_components,
+
+        "git_history":
+            git_history.get(
+                "output",
+                "",
+            ),
     }
 
     return {
