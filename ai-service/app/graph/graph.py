@@ -18,6 +18,7 @@ from app.graph.nodes.refactor import refactor_node
 from app.graph.nodes.delete import delete_node
 from app.graph.nodes.create import create_node
 from app.graph.nodes.writer import writer_node
+from app.graph.nodes.repository_analyzer import repository_analyzer_node
 
 from app.graph.nodes.routers.planner_router import route_after_planner
 from app.graph.nodes.routers.human_review_router import route_after_human_review
@@ -67,6 +68,11 @@ def build_agentic_rag_graph():
         create_node,
     )
 
+    graph.add_node(
+        "repository_analyzer",
+        repository_analyzer_node,
+    )
+
     # EDGES
     graph.add_edge(
         START,
@@ -76,9 +82,20 @@ def build_agentic_rag_graph():
         "planner",
         route_after_planner,
         {
-            "retriever": "retriever",
-            "writer": "writer",
+            "repository_analyzer":
+                "repository_analyzer",
+
+            "retriever":
+                "retriever",
+
+            "writer":
+                "writer",
         },
+    )
+
+    graph.add_edge(
+        "repository_analyzer",
+        "writer",
     )
     graph.add_edge(
         "retriever",

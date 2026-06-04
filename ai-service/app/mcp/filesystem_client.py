@@ -61,3 +61,55 @@ class FilesystemMcpClient:
                 return json.loads(
                     result.content[0].text
                 )
+            
+    async def list_files(
+        self,
+        path: str,
+    ) -> dict:
+
+        project_root = (
+            Path(__file__)
+            .resolve()
+            .parents[2]
+        )
+
+        server_params = (
+            StdioServerParameters(
+                command=sys.executable,
+                args=[
+                    "-m",
+                    "app.mcp.filesystem_server",
+                ],
+                cwd=str(
+                    project_root,
+                ),
+            )
+        )
+
+        async with stdio_client(
+            server_params,
+        ) as (
+            read_stream,
+            write_stream,
+        ):
+
+            async with ClientSession(
+                read_stream,
+                write_stream,
+            ) as session:
+
+                await session.initialize()
+
+                result = (
+                    await session.call_tool(
+                        "list_files",
+                        {
+                            "path": path,
+                        },
+                    )
+                )
+
+                # return result   
+                return json.loads(
+                    result.content[0].text
+                )   

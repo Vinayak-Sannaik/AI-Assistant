@@ -8,7 +8,6 @@ async def writer_node(
 ) -> AgenticRagState:
 
     try:
-
         query = state.get(
             "query",
             "",
@@ -18,6 +17,77 @@ async def writer_node(
             "retrieved_documents",
             [],
         )
+
+        repository_context = state.get(
+            "repository_context",
+        )
+
+        print(
+            "REPOSITORY CONTEXT IN WRITER NODE",
+            repository_context,
+        )
+
+        if repository_context:
+
+            structured_llm = (
+                llm.with_structured_output(
+                    RagResponse
+                )
+            )
+
+            response = await (
+                structured_llm.ainvoke(
+                    f"""
+                    You are a senior staff software engineer.
+
+                    Analyze this repository.
+
+                    Repository Context:
+
+                    {repository_context}
+
+                    Provide:
+
+                    - project purpose
+                    - technology stack
+                    - architecture overview
+                    - component responsibilities
+                    - design observations
+                    - improvement opportunities
+
+                    Base your answer ONLY on
+                    the repository context.
+
+                    Only use evidence present in the repository context.
+                    Do not assume databases, microservices, cloud providers, or external systems unless explicitly present.
+                    """
+                )
+            )
+
+            markdown = (
+                format_rag_response(
+                    response
+                )
+            )
+
+            return {
+                **state,
+
+                "status": "completed",
+
+                "markdown": markdown,
+
+                "workflow_events": [
+                    *state.get(
+                        "workflow_events",
+                        [],
+                    ),
+                    {
+                        "node": "writer",
+                        "status": "completed",
+                    },
+                ],
+            }
 
         validation_score = state.get(
             "validation_score",
