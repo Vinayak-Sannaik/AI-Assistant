@@ -19,8 +19,25 @@ class TodoService:
     def create_todo(
         self,
         title: str,
-        description: str = ""
+        description: str = "",
+        priority: str = "medium",
+        tags: list[str] | None = None
     ) -> dict:
+        allowed_priorities = [
+            "low",
+            "medium",
+            "high",
+            "critical"
+        ]
+
+        if priority not in allowed_priorities:
+            raise ValueError(
+                f"Invalid priority. Allowed values: {allowed_priorities}"
+            )
+        
+        if tags is None:
+            tags = []
+
         todos = self.repository.get_all()
 
         next_id = 1
@@ -31,10 +48,18 @@ class TodoService:
         todo = {
             "id": next_id,
             "title": title,
-            "description": description
+            "description": description,
+            "status": "pending",
+            "priority":priority,
+            "tags": tags
         }
 
-        return self.repository.create(todo)
+        todo =  self.repository.create(todo)
+        return {
+            "success": True,
+            "message": f"Todo created successfully with id {todo['id']}",
+            "data": todo
+        }
     
     def update_todo(
         self,
@@ -59,3 +84,25 @@ class TodoService:
             raise ValueError(f"Todo with id {todo_id} not found")
 
         self.repository.delete(todo_id)
+
+    def search_todos(self, query: str = "", tag: str = "") -> list:
+        todos = self.repository.get_all()
+
+        results = []
+
+        for todo in todos:
+            matches_query = (
+                not query
+                or query.lower() in todo.get("title", "").lower()
+                or query.lower() in todo.get("description", "").lower()
+            )
+
+            matches_tag = (
+                not tag
+                or tag.lower() in [t.lower() for t in todo.get("tags", [])]
+            )
+
+            if matches_query and matches_tag:
+                results.append(todo)
+
+        return results

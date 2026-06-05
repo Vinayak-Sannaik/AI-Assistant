@@ -13,5 +13,72 @@
     "id": 4,
     "title": "Learn MCP",
     "description": ""
+  },
+  {
+    "id": 5,
+    "title": "Learn MCP",
+    "description": "",
+    "status": "pending"
+  },
+  {
+    "id": 6,
+    "title": "priority task",
+    "description": "",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": 7,
+    "title": "add_todo() with priority high",
+    "description": "Priority: high",
+    "status": "pending",
+    "priority": "high"
+  },
+  {
+    "id": 8,
+    "title": "testing",
+    "description": "test",
+    "status": "pending",
+    "priority": "high"
+  },
+  {
+    "id": 9,
+    "title": "schema-check",
+    "description": "",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": 10,
+    "title": "schema-check2",
+    "description": "ok",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": 11,
+    "title": "Buy milk",
+    "description": "2 gallons of milk",
+    "status": "pending",
+    "priority": "high"
+  },
+  {
+    "id": 12,
+    "title": "yourself created todo",
+    "description": "",
+    "status": "pending",
+    "priority": "high",
+    "tags": [
+      "learning",
+      "ai"
+    ]
+  },
+  {
+    "id": 13,
+    "title": "Example Task",
+    "description": "This is a test task.",
+    "status": "pending",
+    "priority": "medium",
+    "tags": []
   }
 ]
