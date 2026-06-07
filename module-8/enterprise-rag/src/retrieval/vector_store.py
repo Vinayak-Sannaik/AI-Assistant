@@ -4,17 +4,6 @@ import uuid
 from src.embeddings.embedding_service import EmbeddingService
 
 
-# class ChromaEmbeddingFunction:
-#     def __init__(self):
-#         self.embedding_service = EmbeddingService()
-
-#     def __call__(self, input):
-#         return self.embedding_service.model.encode(input).tolist()
-
-#     def name(self):
-#         return "bge-small-en-v1.5"
-
-
 class VectorStore:
 
     def __init__(self):
@@ -70,5 +59,4 @@ class VectorStore:
 
         self.collection = self.client.get_or_create_collection(
             name="documents",
-            # embedding_function=ChromaEmbeddingFunction(),
         )

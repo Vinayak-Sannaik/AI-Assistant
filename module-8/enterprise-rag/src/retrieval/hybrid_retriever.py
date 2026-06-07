@@ -40,17 +40,17 @@ class HybridRetriever:
             ]
         )
 
-        print("\nBM25 Ranking")
-        for doc in bm25_ranked:
-            print(doc)
+        # print("\nBM25 Ranking")
+        # for doc in bm25_ranked:
+        #     print(doc)
 
-        print("\nVector Ranking")
-        for doc in vector_ranked:
-            print(doc)
+        # print("\nVector Ranking")
+        # for doc in vector_ranked:
+        #     print(doc)
 
-        print("\nFused Ranking")
-        for doc, score in fused_results:
-            print(score, doc)
+        # print("\nFused Ranking")
+        # for doc, score in fused_results:
+        #     print(score, doc)
 
         return [
             document
