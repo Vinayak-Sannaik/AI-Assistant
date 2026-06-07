@@ -14,10 +14,18 @@ chunks = chunker.split_documents(documents)
 
 vector_store.add_documents(chunks)
 
+# results = vector_store.search(
+#     "What is a vector database?",
+#     top_k=3,
+# )
+
+# print(results["documents"][0])
+# print("Results:",results)
+
 results = vector_store.search(
-    "What is a vector database?",
-    top_k=3,
+    "ChromaDB",
+    top_k=5
 )
 
 print(results["documents"][0])
-print("Results:",results)
+print(results["distances"][0])

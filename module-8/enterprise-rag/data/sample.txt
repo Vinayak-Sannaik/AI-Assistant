@@ -2,6 +2,8 @@ LangGraph is a framework for building stateful AI workflows.
 
 ChromaDB is a vector database used in Retrieval Augmented Generation systems.
 
+ChromaDB is useful because it stores vector embeddings and enables semantic similarity search over documents.
+
 Embeddings convert text into numerical vectors.
 
 FastAPI is a modern Python web framework.
