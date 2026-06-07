@@ -1,0 +1,7 @@
+LangGraph is a framework for building stateful AI workflows.
+
+ChromaDB is a vector database used in Retrieval Augmented Generation systems.
+
+Embeddings convert text into numerical vectors.
+
+FastAPI is a modern Python web framework.
