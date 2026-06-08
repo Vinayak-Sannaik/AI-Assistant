@@ -24,6 +24,41 @@ class DocumentLoader:
             loader = TextLoader(str(path), encoding="utf-8")
 
         else:
-            raise ValueError(f"Unsupported file type: {extension}")
+            raise ValueError(
+                f"Unsupported file type: {extension}"
+            )
 
         return loader.load()
+
+    def load_directory(
+        self,
+        directory_path: str,
+    ):
+        documents = []
+
+        directory = Path(directory_path)
+
+        supported_extensions = {
+            ".pdf",
+            ".docx",
+            ".txt",
+            ".md",
+        }
+
+        for file_path in directory.iterdir():
+
+            if not file_path.is_file():
+                continue
+
+            if file_path.suffix.lower() not in supported_extensions:
+                continue
+
+            print("Loading:", file_path)
+
+            docs = self.load(
+                str(file_path)
+            )
+
+            documents.extend(docs)
+
+        return documents

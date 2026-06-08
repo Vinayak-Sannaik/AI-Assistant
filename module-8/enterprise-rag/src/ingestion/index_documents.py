@@ -12,8 +12,8 @@ chunker = TextChunker(
     chunk_overlap=10,
 )
 
-documents = loader.load(
-    "data/sample.txt"
+documents = loader.load_directory(
+    "data"
 )
 
 chunks = chunker.split_documents(

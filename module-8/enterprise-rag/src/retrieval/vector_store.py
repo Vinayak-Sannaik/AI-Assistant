@@ -44,12 +44,26 @@ class VectorStore:
             ],
         )
 
-    def search(self, query: str, top_k: int = 3):
+    def search(
+        self,
+        query: str,
+        top_k: int = 3,
+        source: str | None = None,
+    ):
         query_embedding = self.embedding_service.embed_text(query)
 
+        query_params = {
+            "query_embeddings": [query_embedding],
+            "n_results": top_k,
+        }
+
+        if source:
+            query_params["where"] = {
+                "source": source
+            }
+
         results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k,
+            **query_params
         )
 
         return results

@@ -1,10 +1,11 @@
-from src.llm.gemini_service import GeminiService
+# from src.llm.gemini_service import GeminiService
+from src.llm.llm_service import LLMService
 
 
 class QueryRewriter:
 
     def __init__(self):
-        self.llm = GeminiService()
+        self.llm = LLMService()
 
     def rewrite(
         self,

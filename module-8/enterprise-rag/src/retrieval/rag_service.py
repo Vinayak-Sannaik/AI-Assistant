@@ -9,7 +9,7 @@
 # llm.invoke()
 
 
-from src.llm.gemini_service import GeminiService
+from src.llm.llm_service import LLMService
 from src.memory.conversation_memory import ConversationMemory
 from src.retrieval.query_rewriter import QueryRewriter
 from src.retrieval.retrieval_pipeline import RetrievalPipeline
@@ -18,7 +18,7 @@ from src.retrieval.retrieval_pipeline import RetrievalPipeline
 class RAGService:
 
     def __init__(self):
-        self.llm = GeminiService()
+        self.llm = LLMService()
         self.memory = ConversationMemory()
         self.query_rewriter = QueryRewriter()
         self.retrieval_pipeline = RetrievalPipeline()

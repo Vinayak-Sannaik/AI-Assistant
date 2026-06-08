@@ -24,11 +24,13 @@ class RetrievalPipeline:
         self,
         query: str,
         top_k: int = 3,
+        source: str | None = None
     ):
 
         results = self.retriever.search(
             query,
             top_k=top_k,
+            source=source,
         )
 
         reranked = self.reranker.rerank(
@@ -37,7 +39,13 @@ class RetrievalPipeline:
             top_k=top_k,
         )
 
-        return [
-            doc
-            for doc, _score in reranked
-        ]
+        return {
+            "chunks": [
+                doc
+                for doc, _score in reranked
+            ],
+            "scores": [
+                score
+                for _, score in reranked
+            ]
+        }

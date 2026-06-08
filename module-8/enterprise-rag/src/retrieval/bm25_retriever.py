@@ -24,15 +24,50 @@ class BM25Retriever:
         self,
         query: str,
         top_k: int = TOP_K_RERANK,
+        source: str | None = None,
     ):
         tokenized_query = query.lower().split()
 
-        scores = self.bm25.get_scores(
+        # No filter → use main BM25 index
+        if source is None:
+
+            scores = self.bm25.get_scores(
+                tokenized_query
+            )
+
+            ranked = sorted(
+                zip(self.documents, scores),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            return ranked[:top_k]
+
+        # Source filter → build BM25 on subset
+        filtered_documents = [
+            doc
+            for doc in self.documents
+            if doc.metadata.get("source") == source
+        ]
+
+        if not filtered_documents:
+            return []
+
+        tokenized_docs = [
+            doc.page_content.lower().split()
+            for doc in filtered_documents
+        ]
+
+        filtered_bm25 = BM25Okapi(
+            tokenized_docs
+        )
+
+        scores = filtered_bm25.get_scores(
             tokenized_query
         )
 
         ranked = sorted(
-            zip(self.documents, scores),
+            zip(filtered_documents, scores),
             key=lambda x: x[1],
             reverse=True,
         )

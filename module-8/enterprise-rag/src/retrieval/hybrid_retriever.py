@@ -17,15 +17,18 @@ class HybridRetriever(BaseRetriever):
         self,
         query: str,
         top_k: int = 5,
+        source: str | None = None,
     ):
         chroma_results = self.vector_store.search(
             query,
             top_k=top_k,
+            source=source
         )
 
         bm25_results = self.bm25_retriever.search(
             query,
             top_k=top_k,
+            source=source
         )
 
         vector_ranked = chroma_results["documents"][0]
