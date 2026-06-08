@@ -1,8 +1,9 @@
 from src.retrieval.vector_store import VectorStore
 from src.retrieval.bm25_retriever import BM25Retriever
 from src.retrieval.rrf import reciprocal_rank_fusion
+from src.retrieval.base_retriever import BaseRetriever
 
-class HybridRetriever:
+class HybridRetriever(BaseRetriever):
 
     def __init__(
         self,

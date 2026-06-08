@@ -5,8 +5,11 @@ rag = RAGService()
 # response = rag.ask(
 #     "What is ChromaDB?"
 # )
+# response = rag.ask(
+#     "Who invented Python?"
+# )
 response = rag.ask(
-    "Who invented Python?"
+    "Why is ChromaDB useful?"
 )
 
 print(response)

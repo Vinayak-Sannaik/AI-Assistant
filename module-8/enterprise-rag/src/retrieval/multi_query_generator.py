@@ -9,17 +9,17 @@ class MultiQueryGenerator:
     def generate(self, question: str):
 
         prompt = f"""
-Generate 4 different search queries.
+            Generate 4 different search queries.
 
-The queries should help retrieve relevant
-documents from a vector database.
+            The queries should help retrieve relevant
+            documents from a vector database.
 
-Question:
-{question}
+            Question:
+            {question}
 
-Return one query per line.
-Do not number them.
-"""
+            Return one query per line.
+            Do not number them.
+            """
 
         response = self.llm.invoke(prompt)
 

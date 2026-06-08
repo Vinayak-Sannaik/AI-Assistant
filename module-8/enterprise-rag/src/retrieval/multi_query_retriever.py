@@ -1,9 +1,8 @@
-from src.retrieval.multi_query_generator import (
-    MultiQueryGenerator
-)
+from src.retrieval.multi_query_generator import MultiQueryGenerator
+from src.retrieval.base_retriever import BaseRetriever
 
 
-class MultiQueryRetriever:
+class MultiQueryRetriever(BaseRetriever):
 
     def __init__(self, retriever):
         self.retriever = retriever

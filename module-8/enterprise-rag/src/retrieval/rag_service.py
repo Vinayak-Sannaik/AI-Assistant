@@ -1,16 +1,27 @@
-from src.retrieval.vector_store import VectorStore
+# question
+#    ↓
+# rewrite
+#    ↓
+# retrieval_pipeline.retrieve()
+#    ↓
+# context
+#    ↓
+# llm.invoke()
+
+
 from src.llm.gemini_service import GeminiService
 from src.memory.conversation_memory import ConversationMemory
 from src.retrieval.query_rewriter import QueryRewriter
+from src.retrieval.retrieval_pipeline import RetrievalPipeline
 
 
 class RAGService:
 
     def __init__(self):
-        self.vector_store = VectorStore()
         self.llm = GeminiService()
         self.memory = ConversationMemory()
         self.query_rewriter = QueryRewriter()
+        self.retrieval_pipeline = RetrievalPipeline()
 
     def ask(self, question: str):
 
@@ -20,21 +31,14 @@ class RAGService:
             question=question,
             conversation_history=history,
         )
-        # print("\nRewritten Query:")
-        # print(standalone_question)
-        results = self.vector_store.search(
-            standalone_question,
-            top_k=3,
+
+
+        context_chunks = self.retrieval_pipeline.retrieve(
+            standalone_question
         )
 
-        # Directly using original q some time not retrievable results, so using rewritten query for retrieval.
-        # results = self.vector_store.search(
-        #     question,
-        #     top_k=3,
-        # )
-
         context = "\n\n".join(
-            results["documents"][0]
+            context_chunks
         )
 
         prompt = f"""
