@@ -7,8 +7,17 @@ import {
 } from "../api/ragApi";
 import { Trash2, Loader2 } from "lucide-react";
 
-export default function Sidebar() {
-  const [documents, setDocuments] = useState<string[]>([]);
+interface Props {
+  documents: string[];
+  setDocuments: React.Dispatch<
+    React.SetStateAction<string[]>
+  >;
+}
+
+export default function Sidebar({
+  documents,
+  setDocuments,
+}: Props) {
   const [uploading, setUploading] = useState(false);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
 

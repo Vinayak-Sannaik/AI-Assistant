@@ -1,10 +1,9 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File ,HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from src.ingestion.index_documents import index_documents
-from fastapi.middleware.cors import CORSMiddleware
 import json
 from pathlib import Path
-from fastapi import HTTPException
 
 from src.retrieval.rag_service import RAGService
 # from src.rag.rag_service import RAGService
@@ -72,13 +71,17 @@ async def upload(
 def ask(
     request: AskRequest,
 ):
+    print("ask endpoint", request)
     result = rag.ask(
-        request.question
+        question=request.question,
+        source=request.source,
     )
 
     return AskResponse(
         answer=result["answer"],
         sources=result["sources"],
+        citations=result["citations"],
+        debug=result["debug"],
     )
 
 @app.get(

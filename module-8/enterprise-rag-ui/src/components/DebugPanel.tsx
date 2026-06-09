@@ -2,48 +2,61 @@ interface Props {
   debug: any;
 }
 
-export default function DebugPanel({
-  debug,
-}: Props) {
+import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+export default function DebugPanel({ debug }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
   if (!debug) return null;
 
   return (
     <div className="bg-white border-t p-4">
-      <h3 className="font-bold mb-3">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 font-bold"
+      >
+        {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         Retrieval Debug
-      </h3>
+      </button>
 
-      <p>
-        <strong>Rewritten Query:</strong>
-      </p>
+      {expanded && (
+        <>
+          <div className="mb-4">
+            <p className="font-semibold">Retrieval Query</p>
+            <p className="text-sm text-gray-700">{debug.retrieval_query}</p>
+          </div>
 
-      <p className="mb-4">
-        {debug.rewritten_query}
-      </p>
+          <div>
+            <p className="font-semibold">Chunks Used</p>
+            <p className="text-sm text-gray-700">{debug.chunks_used}</p>
+          </div>
+          <div className="mt-4">
+            <p className="font-semibold">Sources</p>
 
-      <p>
-        <strong>Retrieved Chunks:</strong>
-      </p>
+            <ul className="text-sm">
+              {debug.sources?.map((source: string) => (
+                <li key={source}>• {source}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-4">
+            <p className="font-semibold">Citations</p>
 
-      <ul className="mb-4">
-        {debug.retrieved_chunks.map(
-          (chunk: string, idx: number) => (
-            <li key={idx}>• {chunk}</li>
-          )
-        )}
-      </ul>
-
-      <p>
-        <strong>Reranked Chunks:</strong>
-      </p>
-
-      <ul>
-        {debug.reranked_chunks.map(
-          (chunk: string, idx: number) => (
-            <li key={idx}>• {chunk}</li>
-          )
-        )}
-      </ul>
+            <ul className="text-sm">
+              {debug.citations?.map((citation: any, index: number) => (
+                <li key={index}>
+                  {citation.source}
+                  {" | "}
+                  chunk {citation.chunk_id}
+                  {" | "}
+                  score {citation.score.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 # from src.llm.gemini_service import GeminiService
 from src.llm.llm_service import LLMService
 
-
 class QueryRewriter:
 
     def __init__(self):
@@ -10,21 +9,31 @@ class QueryRewriter:
     def rewrite(
         self,
         question: str,
-        conversation_history: str,
+        conversation_history,
     ):
+
+        if not conversation_history:
+            return question
+
+        history_text = "\n".join(
+            [
+                f"{msg['role']}: {msg['content']}"
+                for msg in conversation_history
+            ]
+        )
+
         prompt = f"""
-            You are a query rewriting assistant.
+You are a query rewriting assistant.
 
-            Your task is to convert a follow-up question into a standalone question.
+Convert follow-up questions into standalone questions.
 
-            Conversation:
-            {conversation_history}
+Conversation:
+{history_text}
 
-            Question:
-            {question}
+Question:
+{question}
 
-            Return only the rewritten standalone question.
-            Do not explain anything.
-            """
+Return only the standalone question.
+"""
 
         return self.llm.invoke(prompt).strip()

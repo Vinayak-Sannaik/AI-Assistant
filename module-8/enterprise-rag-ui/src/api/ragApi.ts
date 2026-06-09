@@ -7,16 +7,20 @@ const api = axios.create({
 
 
 export const askQuestion = async (
-  question: string
+  question: string,
+  source?: string
 ) => {
   const response = await api.post(
     "/ask",
     {
       question,
+      source: source
+        ? `data/${source}`
+        : undefined,
     }
   );
 
-  return response.data;
+  return response?.data;
 };
 
 

@@ -7,45 +7,52 @@
         }
     },
     {
-        "content": "LangGraph is a framework for building stateful AI workflows.",
+        "content": "my name is vinayak i love coding",
         "metadata": {
-            "source": "data/sample.txt",
+            "source": "data/sample2.txt",
             "chunk_id": 1
         }
     },
     {
-        "content": "ChromaDB is a vector database used in Retrieval Augmented Generation systems.",
+        "content": "LangGraph is a framework for building stateful AI workflows.",
         "metadata": {
             "source": "data/sample.txt",
             "chunk_id": 2
         }
     },
     {
-        "content": "ChromaDB is useful because it stores vector embeddings and enables semantic",
+        "content": "ChromaDB is a vector database used in Retrieval Augmented Generation systems.",
         "metadata": {
             "source": "data/sample.txt",
             "chunk_id": 3
         }
     },
     {
-        "content": "semantic similarity search over documents.",
+        "content": "ChromaDB is useful because it stores vector embeddings and enables semantic",
         "metadata": {
             "source": "data/sample.txt",
             "chunk_id": 4
         }
     },
     {
-        "content": "Embeddings convert text into numerical vectors.",
+        "content": "semantic similarity search over documents.",
         "metadata": {
             "source": "data/sample.txt",
             "chunk_id": 5
         }
     },
     {
-        "content": "FastAPI is a modern Python web framework.",
+        "content": "Embeddings convert text into numerical vectors.",
         "metadata": {
             "source": "data/sample.txt",
             "chunk_id": 6
+        }
+    },
+    {
+        "content": "FastAPI is a modern Python web framework.",
+        "metadata": {
+            "source": "data/sample.txt",
+            "chunk_id": 7
         }
     }
 ]

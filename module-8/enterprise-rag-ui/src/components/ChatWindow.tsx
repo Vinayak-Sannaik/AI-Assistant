@@ -7,7 +7,7 @@ interface Props {
 export default function ChatWindow({ messages }: Props) {
   console.log("messages", messages);
   return (
-    <div className="h-full overflow-y-auto p-6 flex flex-col justify-end gap-4">
+    <div className="h-full overflow-y-auto p-6 flex flex-col gap-4">
       {messages.map((msg, index) => (
         <div
           key={index}
