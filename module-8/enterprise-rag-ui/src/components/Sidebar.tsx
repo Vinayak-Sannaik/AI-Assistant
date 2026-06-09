@@ -5,10 +5,12 @@ import {
   getKnowledgeBase,
   deleteDocument,
 } from "../api/ragApi";
+import { Trash2, Loader2 } from "lucide-react";
 
 export default function Sidebar() {
   const [documents, setDocuments] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [deletingFile, setDeletingFile] = useState<string | null>(null);
 
   const [totalChunks, setTotalChunks] = useState(0);
 
@@ -54,6 +56,8 @@ export default function Sidebar() {
     if (!confirmed) return;
 
     try {
+      setDeletingFile(filename);
+
       await deleteDocument(filename);
 
       await loadKnowledgeBase();
@@ -61,15 +65,17 @@ export default function Sidebar() {
       console.error(error);
 
       alert("Delete failed");
+    } finally {
+      setDeletingFile(null);
     }
   };
   return (
     <div className="w-72 bg-white border-r p-4">
       <h2 className="text-xl font-bold mb-4">Knowledge Base</h2>
 
-      <UploadButton onUpload={handleUpload} uploading={uploading} />
+      <UploadButton onUpload={handleUpload} uploading={uploading}/>
 
-      <div>
+      <div className="mt-8">
         <h3 className="font-semibold mb-2">Documents</h3>
 
         <ul className="space-y-2 text-sm">
@@ -81,9 +87,14 @@ export default function Sidebar() {
 
               <button
                 onClick={() => handleDelete(doc)}
+                disabled={deletingFile === doc}
                 className="opacity-0 group-hover:opacity-100 text-red-500 text-xs"
               >
-                ✕
+                {deletingFile === doc ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
               </button>
             </li>
           ))}
