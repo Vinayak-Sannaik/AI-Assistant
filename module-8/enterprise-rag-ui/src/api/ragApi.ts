@@ -1,58 +1,44 @@
+import axios from "axios";
 import type { AskResponse } from "../types";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 
 export const askQuestion = async (
   question: string
-): Promise<AskResponse> => {
-  console.log("Question:", question);
-
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  return {
-    answer:
-      "ChromaDB is an open-source vector database used for storing embeddings and performing semantic search.",
-
-    sources: ["chromadb.md"],
-
-    debug: {
-      rewritten_query:
-        "Explain ChromaDB vector database architecture",
-
-      retrieved_chunks: [
-        "ChromaDB is a vector database...",
-        "Embeddings are numerical representations..."
-      ],
-
-      reranked_chunks: [
-        "Score 10.2 - ChromaDB is a vector database...",
-        "Score 8.9 - Embeddings are numerical..."
-      ]
+) => {
+  const response = await api.post(
+    "/ask",
+    {
+      question,
     }
-  };
+  );
+
+  return response.data;
 };
 
 
 export const uploadDocument = async (
   file: File
 ) => {
-  console.log("Uploading:", file.name);
+  const formData = new FormData();
 
-  await new Promise((resolve) =>
-    setTimeout(resolve, 1000)
-  );
+  formData.append("file", file);
 
-  return {
-    success: true,
-  };
+  const response = await api.post(
+  "/upload",
+  formData
+);
+
+  return response.data;
 };
 
-export const getKnowledgeBase =
-  async () => {
-    return {
-      documents: [
-        "enterprise-rag.pdf",
-        "chromadb.md",
-      ],
-      total_documents: 2,
-      total_chunks: 127,
-    };
-  };
+export const getKnowledgeBase = async () => {
+  const response = await api.get(
+    "/knowledge-base"
+  );
+
+  return response.data;
+};

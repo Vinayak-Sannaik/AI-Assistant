@@ -5,54 +5,62 @@ from src.ingestion.text_chunker import TextChunker
 from src.retrieval.vector_store import VectorStore
 
 
-loader = DocumentLoader()
+def index_documents():
 
-chunker = TextChunker(
-    chunk_size=80,
-    chunk_overlap=10,
-)
+    loader = DocumentLoader()
 
-documents = loader.load_directory(
-    "data"
-)
-
-chunks = chunker.split_documents(
-    documents
-)
-
-# Save chunks for BM25 rebuilding
-chunk_data = [
-    {
-        "content": chunk.page_content,
-        "metadata": chunk.metadata,
-    }
-    for chunk in chunks
-]
-
-with open(
-    "data/chunks.json",
-    "w",
-    encoding="utf-8",
-) as file:
-    json.dump(
-        chunk_data,
-        file,
-        indent=4,
-        ensure_ascii=False,
+    chunker = TextChunker(
+        chunk_size=80,
+        chunk_overlap=10,
     )
 
-# Recreate vector store from scratch
-vector_store = VectorStore()
+    documents = loader.load_directory(
+        "data"
+    )
 
-vector_store.reset()
+    chunks = chunker.split_documents(
+        documents
+    )
 
-vector_store.add_documents(
-    chunks
-)
+    # Save chunks for BM25 rebuilding
+    chunk_data = [
+        {
+            "content": chunk.page_content,
+            "metadata": chunk.metadata,
+        }
+        for chunk in chunks
+    ]
 
-for i, chunk in enumerate(chunks):
-    print(f"\nChunk {i}")
-    print(chunk.page_content)
+    with open(
+        "data/chunks.json",
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            chunk_data,
+            file,
+            indent=4,
+            ensure_ascii=False,
+        )
 
-print(f"\nIndexed: {len(chunks)}")
-print("Saved chunks to: data/chunks.json")
+    vector_store = VectorStore()
+
+    # vector_store.reset()
+
+    vector_store.add_documents(
+        chunks
+    )
+
+    print(
+        f"Indexed: {len(chunks)}"
+    )
+
+    print(
+        "Saved chunks to: data/chunks.json"
+    )
+
+    return len(chunks)
+
+
+if __name__ == "__main__":
+    index_documents()

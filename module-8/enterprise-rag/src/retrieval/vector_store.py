@@ -62,6 +62,10 @@ class VectorStore:
                 "source": source
             }
 
+        self.collection = self.client.get_or_create_collection(
+            name="documents",
+        )
+
         results = self.collection.query(
             **query_params
         )

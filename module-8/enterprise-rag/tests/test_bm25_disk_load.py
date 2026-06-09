@@ -5,7 +5,7 @@ bm25 = BM25Retriever()
 bm25.load_from_disk()
 
 results = bm25.search(
-    "ChromaDB"
+    "Module 7"
 )
 
 for doc, score in results:

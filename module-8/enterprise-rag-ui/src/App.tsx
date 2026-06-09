@@ -3,7 +3,7 @@ import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
-// import DebugPanel from "./components/DebugPanel";
+import DebugPanel from "./components/DebugPanel";
 
 import { askQuestion } from "./api/ragApi";
 import type { Message } from "./types";
@@ -55,7 +55,7 @@ function App() {
 
         <ChatInput onSend={handleSend} loading={loading} />
 
-        {/* <DebugPanel debug={debug} /> */}
+        <DebugPanel debug={debug} />
       </div>
     </div>
   );

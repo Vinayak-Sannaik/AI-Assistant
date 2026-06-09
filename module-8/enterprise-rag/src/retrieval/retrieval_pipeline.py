@@ -23,7 +23,7 @@ class RetrievalPipeline:
     def retrieve(
         self,
         query: str,
-        top_k: int = 3,
+        top_k: int = 8,
         source: str | None = None
     ):
 
@@ -38,6 +38,11 @@ class RetrievalPipeline:
             results,
             top_k=top_k,
         )
+
+        print("\nReranked:")
+        for doc, score in reranked:
+            print(score)
+            print(doc)
 
         return {
             "chunks": [

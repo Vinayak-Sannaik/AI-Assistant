@@ -33,13 +33,30 @@ class RAGService:
         )
 
 
-        context_chunks = self.retrieval_pipeline.retrieve(
+        retrieval_result = self.retrieval_pipeline.retrieve(
             standalone_question
         )
+
+        context_chunks = retrieval_result["chunks"]
 
         context = "\n\n".join(
             context_chunks
         )
+
+        print("\nQuestion:")
+        print(question)
+
+        print("\nStandalone Question:")
+        print(standalone_question)
+
+        print("\nRetrieved Documents:")
+        
+        for doc in context_chunks:
+            print("\n---")
+            print(doc)
+
+        print("\nContext:")
+        print(context)
 
         prompt = f"""
             You are a helpful assistant.
@@ -57,6 +74,8 @@ class RAGService:
             If answer is unavailable, say "I don't know".
             """
 
+        print("\n------------")
+        print(context)
         answer = self.llm.invoke(prompt)
 
         self.memory.add_user_message(question)

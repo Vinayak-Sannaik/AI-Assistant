@@ -1,13 +1,10 @@
 interface Props {
   onUpload: (file: File) => void;
+  uploading?: boolean;
 }
 
-export default function UploadButton({
-  onUpload,
-}: Props) {
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+export default function UploadButton({ onUpload, uploading }: Props) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
@@ -25,7 +22,7 @@ export default function UploadButton({
       />
 
       <div className="cursor-pointer bg-blue-600 text-white text-center p-3 rounded-lg hover:bg-blue-700">
-        Upload Document
+        {uploading ? "Uploading..." : "Upload Document"}
       </div>
     </label>
   );
