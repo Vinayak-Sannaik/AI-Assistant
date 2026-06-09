@@ -42,3 +42,23 @@ export const getKnowledgeBase = async () => {
 
   return response.data;
 };
+
+
+export const deleteDocument = async (
+  filename: string,
+) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/knowledge-base/${encodeURIComponent(filename)}`,
+    {
+      method: "DELETE",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to delete document",
+    );
+  }
+
+  return response.json();
+};

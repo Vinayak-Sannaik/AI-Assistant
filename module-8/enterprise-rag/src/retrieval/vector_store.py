@@ -2,6 +2,7 @@ import chromadb
 import uuid
 
 from src.embeddings.embedding_service import EmbeddingService
+from src.retrieval.retrieval_document import RetrievalDocument
 
 
 class VectorStore:
@@ -70,7 +71,26 @@ class VectorStore:
             **query_params
         )
 
-        return results
+        documents = []
+
+        for content, metadata in zip(
+            results["documents"][0],
+            results["metadatas"][0],
+        ):
+            documents.append(
+                RetrievalDocument(
+                    content=content,
+                    source=metadata.get(
+                        "source",
+                        "Unknown",
+                    ),
+                    chunk_id=metadata.get(
+                        "chunk_id"
+                    ),
+                )
+            )
+
+        return documents
     
     def reset(self):
         self.client.delete_collection("documents")

@@ -3,6 +3,8 @@ from pathlib import Path
 from src.ingestion.index_documents import index_documents
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from pathlib import Path
+from fastapi import HTTPException
 
 from src.retrieval.rag_service import RAGService
 # from src.rag.rag_service import RAGService
@@ -43,7 +45,7 @@ def health():
 async def upload(
     file: UploadFile = File(...)
 ):
-    global rag_service
+    global rag
 
     data_dir = Path("data")
     data_dir.mkdir(exist_ok=True)
@@ -55,7 +57,7 @@ async def upload(
 
     index_documents()
 
-    rag_service = RAGService()
+    rag = RAGService()
 
     return {
         "message": "Uploaded successfully",
@@ -70,12 +72,13 @@ async def upload(
 def ask(
     request: AskRequest,
 ):
-    answer = rag.ask(
+    result = rag.ask(
         request.question
     )
 
     return AskResponse(
-        answer=answer
+        answer=result["answer"],
+        sources=result["sources"],
     )
 
 @app.get(
@@ -121,3 +124,49 @@ def knowledge_base():
         ),
         total_chunks=chunk_count
     )
+
+@app.delete(
+    "/knowledge-base/{filename}"
+)
+def delete_document(
+    filename: str,
+):
+    file_path = Path(
+        "data"
+    ) / filename
+
+    if filename == "chunks.json":
+        raise HTTPException(
+            status_code=400,
+            detail="Protected file",
+        )
+
+    if not file_path.exists():
+
+        raise HTTPException(
+            status_code=404,
+            detail="File not found",
+        )
+
+    file_path.unlink()
+
+    indexed_chunks = (
+        index_documents()
+    )
+
+    global rag
+
+    rag = RAGService()
+
+    return {
+        "message": f"{filename} deleted",
+        "remaining_documents": len(
+            [
+                f
+                for f in Path("data").iterdir()
+                if f.is_file()
+                and f.name != "chunks.json"
+            ]
+        ),
+        "indexed_chunks": indexed_chunks,
+    }

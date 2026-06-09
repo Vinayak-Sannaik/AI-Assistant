@@ -2,7 +2,7 @@ from rank_bm25 import BM25Okapi
 from src.configg.settings import TOP_K_RERANK
 import json
 from langchain_core.documents import Document
-
+from src.retrieval.retrieval_document import RetrievalDocument
 
 class BM25Retriever:
 
@@ -28,51 +28,64 @@ class BM25Retriever:
     ):
         tokenized_query = query.lower().split()
 
-        # No filter → use main BM25 index
         if source is None:
 
-            scores = self.bm25.get_scores(
-                tokenized_query
+            documents = self.documents
+            bm25 = self.bm25
+
+        else:
+
+            documents = [
+                doc
+                for doc in self.documents
+                if doc.metadata.get("source") == source
+            ]
+
+            if not documents:
+                return []
+
+            tokenized_docs = [
+                doc.page_content.lower().split()
+                for doc in documents
+            ]
+
+            bm25 = BM25Okapi(
+                tokenized_docs
             )
 
-            ranked = sorted(
-                zip(self.documents, scores),
-                key=lambda x: x[1],
-                reverse=True,
-            )
-
-            return ranked[:top_k]
-
-        # Source filter → build BM25 on subset
-        filtered_documents = [
-            doc
-            for doc in self.documents
-            if doc.metadata.get("source") == source
-        ]
-
-        if not filtered_documents:
-            return []
-
-        tokenized_docs = [
-            doc.page_content.lower().split()
-            for doc in filtered_documents
-        ]
-
-        filtered_bm25 = BM25Okapi(
-            tokenized_docs
-        )
-
-        scores = filtered_bm25.get_scores(
+        scores = bm25.get_scores(
             tokenized_query
         )
 
         ranked = sorted(
-            zip(filtered_documents, scores),
+            zip(documents, scores),
             key=lambda x: x[1],
             reverse=True,
         )
 
-        return ranked[:top_k]
+        results = []
+
+        for doc, score in ranked[:top_k]:
+
+            retrieval_doc = RetrievalDocument(
+                content=doc.page_content,
+                source=doc.metadata.get(
+                    "source",
+                    "Unknown",
+                ),
+                chunk_id=doc.metadata.get(
+                    "chunk_id",
+                ),
+            )
+
+            results.append(
+                (
+                    retrieval_doc,
+                    score,
+                )
+            )
+
+        return results
 
     def load_from_disk(
         self,

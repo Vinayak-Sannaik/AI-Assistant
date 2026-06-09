@@ -45,7 +45,7 @@ def index_documents():
 
     vector_store = VectorStore()
 
-    # vector_store.reset()
+    vector_store.reset()
 
     vector_store.add_documents(
         chunks

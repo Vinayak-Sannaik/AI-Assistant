@@ -5,9 +5,13 @@ bm25 = BM25Retriever()
 bm25.load_from_disk()
 
 results = bm25.search(
-    "Module 7"
+    "What is ChromaDB?"
 )
 
 for doc, score in results:
-    print("\nScore:", score)
-    print(doc.page_content)
+    print(score)
+    print(doc)
+
+# for doc, score in results:
+#     print("\nScore:", score)
+#     print(doc.page_content)

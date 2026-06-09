@@ -1,12 +1,22 @@
-# question
-#    ↓
-# rewrite
-#    ↓
-# retrieval_pipeline.retrieve()
-#    ↓
-# context
-#    ↓
-# llm.invoke()
+# VectorStore
+#     ↓
+# RetrievalDocument
+#     ↓
+# BM25
+#     ↓
+# Hybrid
+#     ↓
+# RRF
+#     ↓
+# Reranker
+#     ↓
+# RetrievalPipeline
+#     ↓
+# RAGService
+#     ↓
+# FastAPI
+#     ↓
+# UI
 
 
 from src.llm.llm_service import LLMService
@@ -38,6 +48,8 @@ class RAGService:
         )
 
         context_chunks = retrieval_result["chunks"]
+        sources = retrieval_result["sources"]
+        scores = retrieval_result["scores"]
 
         context = "\n\n".join(
             context_chunks
@@ -50,10 +62,16 @@ class RAGService:
         print(standalone_question)
 
         print("\nRetrieved Documents:")
-        
-        for doc in context_chunks:
+
+        for chunk, source, score in zip(
+            context_chunks,
+            sources,
+            scores,
+        ):
             print("\n---")
-            print(doc)
+            print("Source:", source)
+            print("Score:", score)
+            print(chunk)
 
         print("\nContext:")
         print(context)
@@ -76,9 +94,15 @@ class RAGService:
 
         print("\n------------")
         print(context)
+
         answer = self.llm.invoke(prompt)
 
         self.memory.add_user_message(question)
         self.memory.add_assistant_message(answer)
 
-        return answer
+        return {
+            "answer": answer,
+            "sources": list(
+                dict.fromkeys(sources)
+            ),
+        }

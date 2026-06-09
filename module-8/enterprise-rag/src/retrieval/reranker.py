@@ -1,4 +1,5 @@
 from sentence_transformers import CrossEncoder
+from src.retrieval.retrieval_document import RetrievalDocument
 
 
 class Reranker:
@@ -11,12 +12,13 @@ class Reranker:
     def rerank(
         self,
         query: str,
-        documents: list[str],
+        documents: list[RetrievalDocument],
         top_k: int = 5,
     ):
+
         pairs = [
-            [query, document]
-            for document in documents
+            [query, doc.content]
+            for doc in documents
         ]
 
         scores = self.model.predict(

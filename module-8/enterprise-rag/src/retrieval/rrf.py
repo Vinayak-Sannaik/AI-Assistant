@@ -3,20 +3,37 @@ def reciprocal_rank_fusion(
     k=60,
 ):
     scores = {}
+    documents = {}
 
     for result_list in ranked_lists:
 
-        for rank, item in enumerate(
+        for rank, doc in enumerate(
             result_list,
             start=1,
         ):
-            scores[item] = (
-                scores.get(item, 0)
+
+            key = (
+                doc.source,
+                doc.chunk_id,
+            )
+
+            documents[key] = doc
+
+            scores[key] = (
+                scores.get(key, 0)
                 + 1 / (k + rank)
             )
 
-    return sorted(
+    ranked = sorted(
         scores.items(),
         key=lambda x: x[1],
         reverse=True,
     )
+
+    return [
+        (
+            documents[key],
+            score,
+        )
+        for key, score in ranked
+    ]
