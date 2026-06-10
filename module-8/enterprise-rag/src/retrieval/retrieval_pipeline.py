@@ -2,9 +2,9 @@ from src.retrieval.reranker import Reranker
 from src.retrieval.vector_store import VectorStore
 from src.retrieval.bm25_retriever import BM25Retriever
 from src.retrieval.hybrid_retriever import HybridRetriever
-from src.retrieval.multi_query_generator import (
-    MultiQueryGenerator,
-)
+from src.retrieval.multi_query_generator import MultiQueryGenerator
+from src.retrieval.multi_hop_planner import MultiHopPlanner
+from src.retrieval.query_classifier import QueryClassifier
 
 import json
 
@@ -31,6 +31,9 @@ class RetrievalPipeline:
         )
 
         self.reranker = Reranker()
+        self.multi_hop = MultiHopPlanner()
+        self.query_classifier = QueryClassifier()
+        
 
     def retrieve(
         self,
@@ -41,62 +44,120 @@ class RetrievalPipeline:
 
         original_query = query
 
+        is_multi_hop = (
+            self.query_classifier.is_multi_hop(
+                query
+            )
+        )
+
+        # ---------------------------
+        # Multi-Hop Planning
+        # ---------------------------
+
         if source:
 
-            queries = [
+            hop_queries = [
                 original_query
             ]
 
-            generated_queries = []
-
         else:
 
-            generated_queries = (
-                self.multi_query.generate(
+            hop_queries = (
+                self.multi_hop.generate_steps(
                     original_query
                 )
             )
 
-            queries = list(
-                dict.fromkeys(
-                    [
-                        original_query,
-                        *generated_queries,
-                    ]
-                )
-            )
+            if not hop_queries:
+                hop_queries = [
+                    original_query
+                ]
 
-        print("\nGenerated Queries:")
+        print("\nMulti-Hop Queries:")
 
-        for query_variant in queries:
-            print("->", query_variant)
+        for hop in hop_queries:
+            print("->", hop)
 
         all_results = []
 
-        for query_variant in queries:
+        generated_queries = []
 
-            results = self.retriever.search(
-                query_variant,
-                top_k=top_k,
-                source=source,
+        # ---------------------------
+        # Multi Query Retrieval
+        # ---------------------------
+
+        for hop_query in hop_queries:
+
+            if source:
+
+                queries = [
+                    hop_query
+                ]
+
+            else:
+
+                mq_queries = (
+                    self.multi_query.generate(
+                        hop_query
+                    )
+                )
+
+                queries = list(
+                    dict.fromkeys(
+                        [
+                            hop_query,
+                            *mq_queries,
+                        ]
+                    )
+                )
+
+                generated_queries.extend(
+                    mq_queries
+                )
+
+            print(
+                f"\nQueries for hop: {hop_query}"
             )
 
-            all_results.extend(
-                results
-            )
+            for q in queries:
+                print("   ->", q)
+
+            for query_variant in queries:
+
+                results = self.retriever.search(
+                    query_variant,
+                    top_k=top_k,
+                    source=source,
+                )
+
+                all_results.extend(
+                    results
+                )
+
+        # ---------------------------
+        # No Results
+        # ---------------------------
 
         if not all_results:
             return {
                 "retrieved_documents": [],
                 "generated_queries": generated_queries,
+                "multi_hop_queries": hop_queries,
             }
+
+        # ---------------------------
+        # Deduplicate
+        # ---------------------------
 
         unique_results = {}
 
         for doc in all_results:
 
             unique_results[
-                doc.chunk_id
+                (
+                    doc.source,
+                    doc.chunk_id,
+                )
             ] = doc
 
         results = list(
@@ -111,8 +172,15 @@ class RetrievalPipeline:
             f"Unique: {len(results)}"
         )
 
-        # Larger candidate pool before reranking
+        # ---------------------------
+        # Candidate Pool
+        # ---------------------------
+
         results = results[:50]
+
+        # ---------------------------
+        # Cross Encoder Reranking
+        # ---------------------------
 
         reranked = self.reranker.rerank(
             original_query,
@@ -127,18 +195,22 @@ class RetrievalPipeline:
             print(doc)
 
         if not reranked:
+
             return {
                 "retrieved_documents": [],
                 "generated_queries": generated_queries,
+                "multi_hop_queries": hop_queries,
             }
+
+        # ---------------------------
+        # Adaptive Filtering
+        # ---------------------------
 
         best_score = reranked[0][1]
 
         print(
             f"\nBest Score: {best_score}"
         )
-
-        best_score = reranked[0][1]
 
         threshold = best_score - 2
 
@@ -159,6 +231,10 @@ class RetrievalPipeline:
             f"Final: {len(reranked)}"
         )
 
+        # ---------------------------
+        # Response
+        # ---------------------------
+
         return {
             "retrieved_documents": [
                 {
@@ -169,7 +245,12 @@ class RetrievalPipeline:
                 }
                 for doc, score in reranked
             ],
-            "generated_queries": generated_queries,
+            "generated_queries": list(
+                dict.fromkeys(
+                    generated_queries
+                )
+            ),
+            "multi_hop_queries": hop_queries,
         }
 
     def get_document_chunks(

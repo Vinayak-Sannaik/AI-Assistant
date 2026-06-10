@@ -1,58 +1,149 @@
 [
     {
+        "content": "Transaction Database\n\nThe Transaction Database is a PostgreSQL cluster.",
+        "metadata": {
+            "source": "data/database.txt",
+            "chunk_id": 0
+        }
+    },
+    {
+        "content": "The PostgreSQL cluster experienced connection pool exhaustion during peak",
+        "metadata": {
+            "source": "data/database.txt",
+            "chunk_id": 1
+        }
+    },
+    {
+        "content": "peak traffic.",
+        "metadata": {
+            "source": "data/database.txt",
+            "chunk_id": 2
+        }
+    },
+    {
+        "content": "Connection pool exhaustion caused increased request latency.",
+        "metadata": {
+            "source": "data/database.txt",
+            "chunk_id": 3
+        }
+    },
+    {
+        "content": "Payment Service\n\nThe Payment Service depends on the Transaction Database.",
+        "metadata": {
+            "source": "data/service.txt",
+            "chunk_id": 4
+        }
+    },
+    {
+        "content": "The service processes approximately 50,000 transactions per day.",
+        "metadata": {
+            "source": "data/service.txt",
+            "chunk_id": 5
+        }
+    },
+    {
+        "content": "The service is deployed in AWS.",
+        "metadata": {
+            "source": "data/service.txt",
+            "chunk_id": 6
+        }
+    },
+    {
         "content": "# Enterprise RAG\n\nRAG combines retrieval and generation.",
         "metadata": {
             "source": "data/sample.md",
-            "chunk_id": 0
+            "chunk_id": 7
+        }
+    },
+    {
+        "content": "Payments Team\n\nThe Payments Team owns the Payment Service.",
+        "metadata": {
+            "source": "data/team.txt",
+            "chunk_id": 8
+        }
+    },
+    {
+        "content": "The Payment Service handles transaction validation and payment authorization.",
+        "metadata": {
+            "source": "data/team.txt",
+            "chunk_id": 9
+        }
+    },
+    {
+        "content": "The team is led by Sarah Johnson.",
+        "metadata": {
+            "source": "data/team.txt",
+            "chunk_id": 10
+        }
+    },
+    {
+        "content": "Employee: John Smith\n\nJohn Smith works in the Payments Team.",
+        "metadata": {
+            "source": "data/employee.txt",
+            "chunk_id": 11
+        }
+    },
+    {
+        "content": "The Payments Team is responsible for processing customer transactions.",
+        "metadata": {
+            "source": "data/employee.txt",
+            "chunk_id": 12
+        }
+    },
+    {
+        "content": "John Smith joined the company in 2021.",
+        "metadata": {
+            "source": "data/employee.txt",
+            "chunk_id": 13
         }
     },
     {
         "content": "my name is vinayak i love coding",
         "metadata": {
             "source": "data/sample2.txt",
-            "chunk_id": 1
+            "chunk_id": 14
         }
     },
     {
         "content": "LangGraph is a framework for building stateful AI workflows.",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 2
+            "chunk_id": 15
         }
     },
     {
         "content": "ChromaDB is a vector database used in Retrieval Augmented Generation systems.",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 3
+            "chunk_id": 16
         }
     },
     {
         "content": "ChromaDB is useful because it stores vector embeddings and enables semantic",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 4
+            "chunk_id": 17
         }
     },
     {
         "content": "semantic similarity search over documents.",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 5
+            "chunk_id": 18
         }
     },
     {
         "content": "Embeddings convert text into numerical vectors.",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 6
+            "chunk_id": 19
         }
     },
     {
         "content": "FastAPI is a modern Python web framework.",
         "metadata": {
             "source": "data/sample.txt",
-            "chunk_id": 7
+            "chunk_id": 20
         }
     }
 ]

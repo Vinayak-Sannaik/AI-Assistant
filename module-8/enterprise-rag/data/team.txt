@@ -1,0 +1,7 @@
+Payments Team
+
+The Payments Team owns the Payment Service.
+
+The Payment Service handles transaction validation and payment authorization.
+
+The team is led by Sarah Johnson.

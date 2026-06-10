@@ -72,6 +72,11 @@ class RAGService:
             )
         )
 
+        multi_hop_queries = retrieval_result.get(
+            "multi_hop_queries",
+            []
+        )
+
         retrieved_documents = retrieval_result[
             "retrieved_documents"
         ]
@@ -150,6 +155,7 @@ class RAGService:
         debug = {
             "retrieval_query": standalone_question,
             "generated_queries": generated_queries,
+            "multi_hop_queries": multi_hop_queries,
             "chunks_used": len(
                 retrieved_documents
             ),

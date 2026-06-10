@@ -33,7 +33,7 @@ export default function UploadButton({ onUpload, uploading }: Props) {
         {uploading ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            <span>Uploading...</span>
+            <span>loading...</span>
           </>
         ) : (
           <>

@@ -9,15 +9,10 @@ import { Trash2, Loader2 } from "lucide-react";
 
 interface Props {
   documents: string[];
-  setDocuments: React.Dispatch<
-    React.SetStateAction<string[]>
-  >;
+  setDocuments: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export default function Sidebar({
-  documents,
-  setDocuments,
-}: Props) {
+export default function Sidebar({ documents, setDocuments }: Props) {
   const [uploading, setUploading] = useState(false);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
 
@@ -45,6 +40,7 @@ export default function Sidebar({
 
   const handleUpload = async (file: File) => {
     try {
+      setUploading(true)
       const result = await uploadDocument(file);
 
       console.log(result);
@@ -56,6 +52,8 @@ export default function Sidebar({
       console.error(error);
 
       alert("Upload failed");
+    } finally{
+      setUploading(false)
     }
   };
 
@@ -82,7 +80,7 @@ export default function Sidebar({
     <div className="w-72 bg-white border-r p-4">
       <h2 className="text-xl font-bold mb-4">Knowledge Base</h2>
 
-      <UploadButton onUpload={handleUpload} uploading={uploading}/>
+      <UploadButton onUpload={handleUpload} uploading={uploading} />
 
       <div className="mt-8">
         <h3 className="font-semibold mb-2">Documents</h3>

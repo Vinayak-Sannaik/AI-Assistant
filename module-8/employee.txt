@@ -1,0 +1,7 @@
+Employee: John Smith
+
+John Smith works in the Payments Team.
+
+The Payments Team is responsible for processing customer transactions.
+
+John Smith joined the company in 2021.

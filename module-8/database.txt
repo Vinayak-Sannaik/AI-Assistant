@@ -1,0 +1,7 @@
+Transaction Database
+
+The Transaction Database is a PostgreSQL cluster.
+
+The PostgreSQL cluster experienced connection pool exhaustion during peak traffic.
+
+Connection pool exhaustion caused increased request latency.

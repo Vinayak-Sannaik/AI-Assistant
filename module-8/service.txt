@@ -1,0 +1,7 @@
+Payment Service
+
+The Payment Service depends on the Transaction Database.
+
+The service processes approximately 50,000 transactions per day.
+
+The service is deployed in AWS.
