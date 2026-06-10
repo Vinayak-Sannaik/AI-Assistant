@@ -1,22 +1,22 @@
-# VectorStore
+# Question
 #     ↓
-# RetrievalDocument
+# Query Rewriter
+#     ↓
+# Multi Query Generator
 #     ↓
 # BM25
 #     ↓
-# Hybrid
+# Vector Search
 #     ↓
 # RRF
 #     ↓
-# Reranker
+# Deduplication
 #     ↓
-# RetrievalPipeline
+# Cross Encoder Reranker
 #     ↓
-# RAGService
+# Adaptive Filtering
 #     ↓
-# FastAPI
-#     ↓
-# UI
+# LLM
 
 
 from src.llm.llm_service import LLMService
@@ -43,15 +43,15 @@ class RAGService:
                 question
             )
         ):
-            print("question---------->", question)
+            print("Document Summery ---------->", question)
             return self.summarize_document(
                 source
             )
 
-        if source:
-            standalone_question = question
+        # if source:
+        #     standalone_question = question
 
-        elif not history:
+        if not history:
             standalone_question = question
 
         else:
@@ -63,6 +63,13 @@ class RAGService:
         retrieval_result = self.retrieval_pipeline.retrieve(
             standalone_question,
             source=source
+        )
+
+        generated_queries = (
+            retrieval_result.get(
+                "generated_queries",
+                []
+            )
         )
 
         retrieved_documents = retrieval_result[
@@ -142,6 +149,7 @@ class RAGService:
 
         debug = {
             "retrieval_query": standalone_question,
+            "generated_queries": generated_queries,
             "chunks_used": len(
                 retrieved_documents
             ),
@@ -213,7 +221,7 @@ class RAGService:
             "sources": [source],
             "citations": [],
             "debug": {
-                "mode": "document_summary",
+                "retrieval_query": source,
                 "chunks_used": len(chunks),
                 "mode": "document_summary",
             },

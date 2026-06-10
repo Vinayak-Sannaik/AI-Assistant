@@ -33,12 +33,12 @@ hybrid = HybridRetriever(
     bm25,
 )
 
-# multi_query = MultiQueryRetriever(
-#     hybrid
-# )
+multi_query = MultiQueryRetriever(
+    hybrid
+)
 
 pipeline = RetrievalPipeline(
-    # multi_query
+    multi_query,
     hybrid
 )
 

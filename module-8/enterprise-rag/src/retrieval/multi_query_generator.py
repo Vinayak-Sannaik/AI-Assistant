@@ -1,30 +1,42 @@
-from src.llm.gemini_service import GeminiService
+from src.llm.llm_service import LLMService
 
 
 class MultiQueryGenerator:
 
     def __init__(self):
-        self.llm = GeminiService()
+        self.llm = LLMService()
 
-    def generate(self, question: str):
+    def generate(
+        self,
+        question: str,
+    ):
 
         prompt = f"""
-            Generate 4 different search queries.
+            You are helping a retrieval system.
 
-            The queries should help retrieve relevant
-            documents from a vector database.
+            Generate 4 alternative search queries that
+            could retrieve relevant documents for the
+            same user intent.
 
             Question:
             {question}
 
-            Return one query per line.
-            Do not number them.
+            Requirements:
+            - Different wording
+            - Different keywords
+            - Same meaning
+            - One query per line
+            - No numbering
             """
 
-        response = self.llm.invoke(prompt)
+        response = self.llm.invoke(
+            prompt
+        )
 
-        return [
+        queries = [
             line.strip()
             for line in response.split("\n")
             if line.strip()
         ]
+
+        return queries

@@ -5,7 +5,7 @@ from src.retrieval.multi_query_generator import (
 generator = MultiQueryGenerator()
 
 queries = generator.generate(
-    "How can I store semantic search data?"
+    "What is chromaDB?"
 )
 
 for query in queries:

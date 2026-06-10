@@ -10,6 +10,8 @@ export default function DebugPanel({ debug }: Props) {
 
   if (!debug) return null;
 
+  debug.generated_queries.map((query: string) => console.log(query));
+
   return (
     <div className="bg-white border-t p-4">
       <button
@@ -25,6 +27,18 @@ export default function DebugPanel({ debug }: Props) {
           <div className="mb-4">
             <p className="font-semibold">Retrieval Query</p>
             <p className="text-sm text-gray-700">{debug.retrieval_query}</p>
+          </div>
+
+          <div className="mb-4">
+            <p className="font-semibold">Generated Queries</p>
+
+            <ul className="text-sm text-gray-700 list-disc ml-5">
+              {debug.generated_queries?.map(
+                (generatedQuery: string, index: number) => (
+                  <li key={index}>{generatedQuery}</li>
+                ),
+              )}
+            </ul>
           </div>
 
           <div>

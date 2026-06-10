@@ -23,6 +23,7 @@ class Citation(BaseModel):
 
 class DebugInfo(BaseModel):
     retrieval_query: str | None = None
+    generated_queries: list[str] = []
     chunks_used: int
     mode: str | None = None
 

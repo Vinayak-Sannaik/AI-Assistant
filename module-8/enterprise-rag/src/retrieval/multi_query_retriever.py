@@ -19,7 +19,7 @@ class MultiQueryRetriever(BaseRetriever):
         all_results = []
 
         for query in queries:
-            print(f"\nQuery: {query}")
+            print(f"\nQuery------>: {query}")
 
             results = self.retriever.search(
                 query

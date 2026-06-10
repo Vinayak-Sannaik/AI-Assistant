@@ -22,18 +22,39 @@ class QueryRewriter:
             ]
         )
 
+#         prompt = f"""
+# You are a query rewriting assistant.
+
+# Convert follow-up questions into standalone questions.
+
+# Conversation:
+# {history_text}
+
+# Question:
+# {question}
+
+# Return only the standalone question.
+# """
+
         prompt = f"""
-You are a query rewriting assistant.
+            You are a search query optimizer.
 
-Convert follow-up questions into standalone questions.
+            Your task:
 
-Conversation:
-{history_text}
+            1. If the question is a follow-up question,
+            rewrite it as a standalone question.
 
-Question:
-{question}
+            2. If the question is already standalone,
+            improve it for document retrieval.
 
-Return only the standalone question.
-"""
+            Conversation:
+            {conversation_history}
+
+            Question:
+            {question}
+
+            Return only the rewritten query.
+            Do not explain anything.
+            """
 
         return self.llm.invoke(prompt).strip()

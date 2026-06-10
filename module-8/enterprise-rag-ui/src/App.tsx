@@ -62,7 +62,6 @@ function App() {
         <div className="flex-1 overflow-y-auto">
           <ChatWindow messages={messages} />
         </div>
-        <DebugPanel debug={debug} />
         <ChatInput
           onSend={handleSend}
           loading={loading}
@@ -70,6 +69,7 @@ function App() {
           selectedSource={selectedSource}
           setSelectedSource={setSelectedSource}
         />
+        <DebugPanel debug={debug} />
       </div>
     </div>
   );

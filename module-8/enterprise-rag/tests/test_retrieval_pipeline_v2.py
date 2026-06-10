@@ -3,7 +3,7 @@ from src.retrieval.retrieval_pipeline import RetrievalPipeline
 pipeline = RetrievalPipeline()
 
 results = pipeline.retrieve(
-    "Why is ChromaDB useful?"
+    "Why is ChromaDB?"
 )
 
 for result in results:
