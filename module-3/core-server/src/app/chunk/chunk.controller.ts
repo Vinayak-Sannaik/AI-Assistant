@@ -36,6 +36,7 @@ export class ChunkController {
   async ask(@Body() body: { query: string }) {
     const chunks = await this.chunkService.searchSimilar(body.query);
     // const v = await this.llmService.listModels();
+    // console.log(v);
     const context = chunks.map((c) => c.content).join('\n');
     const prompt = aiAssistant(context, body.query);
     const answer: string = await this.llmService.generateAnswer(prompt);

@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-   "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -32,6 +32,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "fastify": "^5.8.5",
+    "groq-sdk": "^1.2.1",
     "openai": "^6.37.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",

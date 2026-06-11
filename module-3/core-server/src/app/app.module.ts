@@ -8,7 +8,7 @@ import { DocumentModule } from './document/document.module';
 import { ChunkModule } from './chunk/chunk.module';
 import { EmbeddingService } from './embedding/embedding.service';
 import { EmbeddingModule } from './embedding/embedding.module';
-import { LlmService } from './llm/llm.service';
+import { LlmModule } from './llm/llm.module';
 
 @Module({
   imports: [
@@ -17,6 +17,8 @@ import { LlmService } from './llm/llm.service';
       envFilePath: '.env',
       // load: [configuration],
     }),
+
+    LlmModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -42,7 +44,7 @@ import { LlmService } from './llm/llm.service';
     EmbeddingModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmbeddingService, LlmService],
+  providers: [AppService, EmbeddingService],
 })
 export class AppModule {
   constructor(private dataSource: DataSource) {

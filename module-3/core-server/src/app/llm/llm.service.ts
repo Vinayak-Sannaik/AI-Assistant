@@ -1,30 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { GoogleGenAI } from '@google/genai';
+import { GeminiProvider } from './providers/gemini.provider';
+import { GroqProvider } from './providers/groq.provider';
 
 @Injectable()
 export class LlmService {
-  private ai: GoogleGenAI;
-
-  constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
-    }
-
-    this.ai = new GoogleGenAI({ apiKey });
-  }
-
-  async listModels() {
-    const models = await this.ai.models.list();
-    console.log('Available models:', models);
-  }
+  constructor(
+    private readonly geminiProvider: GeminiProvider,
+    private readonly groqProvider: GroqProvider,
+  ) {}
 
   async generateAnswer(prompt: string): Promise<string> {
-    const response: any = await this.ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const provider = process.env.LLM_PROVIDER || 'gemini';
 
-    return response.text;
+    switch (provider) {
+      case 'groq':
+        return this.groqProvider.generateAnswer(prompt);
+
+      case 'gemini':
+      default:
+        return this.geminiProvider.generateAnswer(prompt);
+    }
   }
 }
