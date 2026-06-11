@@ -5,11 +5,10 @@ from src.retrieval.hybrid_retriever import HybridRetriever
 from src.retrieval.multi_query_generator import MultiQueryGenerator
 from src.retrieval.multi_hop_planner import MultiHopPlanner
 from src.retrieval.query_classifier import QueryClassifier
+from src.retrieval.context_compressor import ContextCompressor
+
 
 import json
-
-
-MIN_BEST_SCORE = -8
 
 
 class RetrievalPipeline:
@@ -33,6 +32,7 @@ class RetrievalPipeline:
         self.reranker = Reranker()
         self.multi_hop = MultiHopPlanner()
         self.query_classifier = QueryClassifier()
+        self.compressor = ContextCompressor(self.reranker.model)
         
 
     def retrieve(
@@ -44,15 +44,22 @@ class RetrievalPipeline:
 
         original_query = query
 
+        generated_queries = []
+        hop_queries = []
+
         is_multi_hop = (
             self.query_classifier.is_multi_hop(
-                query
+                original_query
             )
         )
 
-        # ---------------------------
-        # Multi-Hop Planning
-        # ---------------------------
+        print(
+            f"\nMulti-Hop: {is_multi_hop}"
+        )
+
+        # -----------------------------------
+        # Query Planning
+        # -----------------------------------
 
         if source:
 
@@ -60,7 +67,7 @@ class RetrievalPipeline:
                 original_query
             ]
 
-        else:
+        elif is_multi_hop:
 
             hop_queries = (
                 self.multi_hop.generate_steps(
@@ -73,18 +80,22 @@ class RetrievalPipeline:
                     original_query
                 ]
 
-        print("\nMulti-Hop Queries:")
+        else:
+
+            hop_queries = [
+                original_query
+            ]
+
+        print("\nHop Queries:")
 
         for hop in hop_queries:
             print("->", hop)
 
+        # -----------------------------------
+        # Retrieval
+        # -----------------------------------
+
         all_results = []
-
-        generated_queries = []
-
-        # ---------------------------
-        # Multi Query Retrieval
-        # ---------------------------
 
         for hop_query in hop_queries:
 
@@ -94,7 +105,7 @@ class RetrievalPipeline:
                     hop_query
                 ]
 
-            else:
+            elif is_multi_hop:
 
                 mq_queries = (
                     self.multi_query.generate(
@@ -115,6 +126,12 @@ class RetrievalPipeline:
                     mq_queries
                 )
 
+            else:
+
+                queries = [
+                    hop_query
+                ]
+
             print(
                 f"\nQueries for hop: {hop_query}"
             )
@@ -134,20 +151,21 @@ class RetrievalPipeline:
                     results
                 )
 
-        # ---------------------------
+        # -----------------------------------
         # No Results
-        # ---------------------------
+        # -----------------------------------
 
         if not all_results:
+
             return {
                 "retrieved_documents": [],
                 "generated_queries": generated_queries,
                 "multi_hop_queries": hop_queries,
             }
 
-        # ---------------------------
-        # Deduplicate
-        # ---------------------------
+        # -----------------------------------
+        # Deduplication
+        # -----------------------------------
 
         unique_results = {}
 
@@ -172,27 +190,21 @@ class RetrievalPipeline:
             f"Unique: {len(results)}"
         )
 
-        # ---------------------------
+        # -----------------------------------
         # Candidate Pool
-        # ---------------------------
+        # -----------------------------------
 
         results = results[:50]
 
-        # ---------------------------
-        # Cross Encoder Reranking
-        # ---------------------------
+        # -----------------------------------
+        # Reranking
+        # -----------------------------------
 
         reranked = self.reranker.rerank(
             original_query,
             results,
             top_k=top_k,
         )
-
-        print("\nReranked:")
-
-        for doc, score in reranked:
-            print(score)
-            print(doc)
 
         if not reranked:
 
@@ -202,9 +214,11 @@ class RetrievalPipeline:
                 "multi_hop_queries": hop_queries,
             }
 
-        # ---------------------------
-        # Adaptive Filtering
-        # ---------------------------
+        print("\nReranked:")
+
+        for doc, score in reranked:
+            print(score)
+            print(doc)
 
         best_score = reranked[0][1]
 
@@ -212,39 +226,71 @@ class RetrievalPipeline:
             f"\nBest Score: {best_score}"
         )
 
-        threshold = best_score - 2
+        # -----------------------------------
+        # Filtering
+        # -----------------------------------
 
-        filtered_reranked = [
-            (doc, score)
-            for doc, score in reranked
-            if score >= threshold
-        ]
+        if is_multi_hop:
 
-        if filtered_reranked:
-            reranked = filtered_reranked
+            # Preserve evidence chain
+            reranked = reranked[:10]
 
-        print(
-            f"Threshold: {threshold}"
-        )
+            print(
+                "\nMulti-hop mode: keeping top 10 chunks"
+            )
+
+        else:
+
+            threshold = best_score - 2
+
+            filtered_reranked = [
+                (doc, score)
+                for doc, score in reranked
+                if score >= threshold
+            ]
+
+            if filtered_reranked:
+                reranked = filtered_reranked
+
+            print(
+                f"Threshold: {threshold}"
+            )
 
         print(
             f"Final: {len(reranked)}"
         )
 
-        # ---------------------------
+        # -----------------------------------
         # Response
-        # ---------------------------
+        # -----------------------------------
 
+        retrieved_documents = [
+            {
+                "content": doc.content,
+                "source": doc.source,
+                "chunk_id": doc.chunk_id,
+                "score": float(score),
+            }
+            for doc, score in reranked
+        ]
+
+        print(
+            f"\nBefore Compression: {len(retrieved_documents)} docs"
+        )
+
+        retrieved_documents = (
+            self.compressor.compress(
+                original_query,
+                retrieved_documents,
+            )
+        )
+
+        print(
+            f"After Compression: {len(retrieved_documents)} docs"
+        )
+        
         return {
-            "retrieved_documents": [
-                {
-                    "content": doc.content,
-                    "source": doc.source,
-                    "chunk_id": doc.chunk_id,
-                    "score": float(score),
-                }
-                for doc, score in reranked
-            ],
+            "retrieved_documents": retrieved_documents,
             "generated_queries": list(
                 dict.fromkeys(
                     generated_queries

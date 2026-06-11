@@ -48,17 +48,24 @@ class RAGService:
                 source
             )
 
-        # if source:
-        #     standalone_question = question
 
         if not history:
             standalone_question = question
 
         else:
-            standalone_question = self.query_rewriter.rewrite(
-                question=question,
-                conversation_history=history,
+            is_multi_hop = (
+                self.retrieval_pipeline.query_classifier.is_multi_hop(
+                    question
+                )
             )
+
+            if is_multi_hop:
+                standalone_question = question
+            else:
+                standalone_question = self.query_rewriter.rewrite(
+                    question=question,
+                    conversation_history=history,
+                )
 
         retrieval_result = self.retrieval_pipeline.retrieve(
             standalone_question,
@@ -107,20 +114,8 @@ class RAGService:
         print("\nStandalone Question:")
         print(standalone_question)
 
-        # print("\nRetrieved Documents:")
-
-        # for chunk, source, score in zip(
-        #     context_chunks,
-        #     sources,
-        #     scores,
-        # ):
-        #     print("\n---")
-        #     print("Source:", source)
-        #     print("Score:", score)
-        #     print(chunk)
-
-        # print("\nContext:")
-        # print(context)
+        print("\nCONTEXT SENT TO LLM")
+        print(context)
 
         prompt = f"""
             You are a helpful assistant.

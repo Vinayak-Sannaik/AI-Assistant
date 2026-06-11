@@ -10,13 +10,18 @@ class MultiHopPlanner:
         question: str,
     ):
         prompt = f"""
-Break this question into smaller
-search queries.
+Break this question into factual retrieval steps.
 
 Question:
 {question}
 
-Return one query per line.
+Rules:
+- Preserve all named entities.
+- Do not generate generic educational questions.
+- Each step should retrieve a missing fact.
+- Maximum 4 steps.
+
+Return one step per line.
 """
 
         response = self.llm.invoke(
