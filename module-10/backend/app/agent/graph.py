@@ -1,0 +1,55 @@
+from langgraph.graph import StateGraph
+from langgraph.graph import START, END
+
+from .state import AgentState
+
+from .nodes import (
+    router_node,
+    chat_node,
+    read_email_node,
+    summarize_email_node,
+    show_email_node
+)
+
+builder = StateGraph(AgentState)
+
+builder.add_node("router", router_node)
+builder.add_node("chat", chat_node)
+
+builder.add_node("read_email", read_email_node)
+builder.add_node("summarize_email", summarize_email_node)
+builder.add_node("show_email", show_email_node)
+
+
+def route_decision(state: AgentState):
+    return state["route"]
+
+def email_action(state: AgentState):
+    return state["route"]
+
+builder.add_edge(START, "router")
+
+builder.add_conditional_edges(
+    "router",
+    route_decision,
+    {
+        "summarize": "read_email",
+        "show": "read_email",
+        "chat": "chat"
+    }
+)
+
+builder.add_conditional_edges(
+    "read_email",
+    email_action,
+    {
+        "show": "show_email",
+        "summarize": "summarize_email"
+    }
+)
+
+builder.add_edge("summarize_email", END)
+builder.add_edge("show_email", END)
+builder.add_edge("chat", END)
+
+graph = builder.compile()
