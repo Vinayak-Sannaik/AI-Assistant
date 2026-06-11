@@ -29,6 +29,11 @@ def router_node(state: AgentState):
         return {
             "route": "show"
         }
+    
+    if "reply" in message:
+        return {
+            "route": "reply"
+        }
 
     return {
         "route": "chat"
@@ -77,11 +82,32 @@ def show_email_node(state: AgentState):
 
     return {
         "response": f"""
-Subject: {email['subject']}
+        Subject: {email['subject']}
 
-From: {email['sender']}
+        From: {email['sender']}
 
-Content:
-{email['snippet']}
-"""
+        Content:
+        {email['snippet']}
+        """
+    }
+
+
+def draft_reply_node(state: AgentState):
+
+    email = state["email"]
+
+    prompt = f"""
+    Write a professional email reply.
+
+    Original Email Subject:
+    {email["subject"]}
+
+    Email Content:
+    {email["snippet"]}
+    """
+
+    response = llm.invoke(prompt)
+
+    return {
+        "draft": response.content
     }

@@ -41,6 +41,10 @@ from app.agent.graph import graph
 #     )
 # )
 
+# print(graph.invoke({
+#     "message": "show latest email"
+# }))
+
 print(graph.invoke({
-    "message": "show latest email"
+    "message": "reply professionally"
 }))

@@ -8,7 +8,8 @@ from .nodes import (
     chat_node,
     read_email_node,
     summarize_email_node,
-    show_email_node
+    show_email_node,
+    draft_reply_node
 )
 
 builder = StateGraph(AgentState)
@@ -17,6 +18,7 @@ builder.add_node("router", router_node)
 builder.add_node("chat", chat_node)
 
 builder.add_node("read_email", read_email_node)
+builder.add_node("draft_reply", draft_reply_node)
 builder.add_node("summarize_email", summarize_email_node)
 builder.add_node("show_email", show_email_node)
 
@@ -35,6 +37,7 @@ builder.add_conditional_edges(
     {
         "summarize": "read_email",
         "show": "read_email",
+        "reply": "read_email",
         "chat": "chat"
     }
 )
@@ -44,12 +47,14 @@ builder.add_conditional_edges(
     email_action,
     {
         "show": "show_email",
-        "summarize": "summarize_email"
+        "summarize": "summarize_email",
+        "reply": "draft_reply"
     }
 )
 
 builder.add_edge("summarize_email", END)
 builder.add_edge("show_email", END)
+builder.add_edge("draft_reply", END)
 builder.add_edge("chat", END)
 
 graph = builder.compile()
