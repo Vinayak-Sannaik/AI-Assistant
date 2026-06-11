@@ -1,6 +1,9 @@
 from app.gmail.auth import get_gmail_service
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+from email.mime.text import MIMEText
+import base64
+
 
 load_dotenv()
 
@@ -72,3 +75,31 @@ Content:
     response = llm.invoke(prompt)
 
     return response.content
+
+
+def send_email(to: str, subject: str, body: str):
+
+    service = get_gmail_service()
+
+    message = MIMEText(body)
+
+    message["to"] = to
+    message["subject"] = subject
+
+    raw = base64.urlsafe_b64encode(
+        message.as_bytes()
+    ).decode()
+
+    send_message = (
+        service.users()
+        .messages()
+        .send(
+            userId="me",
+            body={
+                "raw": raw
+            }
+        )
+        .execute()
+    )
+
+    return send_message

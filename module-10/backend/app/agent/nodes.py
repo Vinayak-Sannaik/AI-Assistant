@@ -2,6 +2,8 @@ from app.gmail.service import get_latest_email
 from .state import AgentState
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+import app.store.draft_store as draft_store
+
 
 load_dotenv()
 
@@ -33,6 +35,11 @@ def router_node(state: AgentState):
     if "reply" in message:
         return {
             "route": "reply"
+        }
+    
+    if "send" in message:
+        return {
+            "route": "send"
         }
 
     return {
@@ -97,17 +104,52 @@ def draft_reply_node(state: AgentState):
     email = state["email"]
 
     prompt = f"""
-    Write a professional email reply.
+        Write ONLY the email body.
 
-    Original Email Subject:
-    {email["subject"]}
+        Do not include:
+        - Subject line
+        - To field
+        - From field
 
-    Email Content:
-    {email["snippet"]}
-    """
+        Original Email Subject:
+        {email["subject"]}
+
+        Email Content:
+        {email["snippet"]}
+        """
 
     response = llm.invoke(prompt)
 
-    return {
-        "draft": response.content
+    draft = {
+        "to": email["sender"],
+        "subject": f"Re: {email['subject']}",
+        "body": response.content
     }
+
+    draft_store.current_draft = draft
+
+    return {
+        "draft": draft
+    }
+
+
+def send_draft_node(state: AgentState):
+
+    if not draft_store.current_draft:
+        return {
+            "response": "No draft available to send."
+        }
+
+    draft = draft_store.current_draft
+
+    return {
+        "response": f"""
+        To: {draft['to']}
+
+        Subject: {draft['subject']}
+
+        Body:
+        {draft['body']}
+        """
+    }
+
