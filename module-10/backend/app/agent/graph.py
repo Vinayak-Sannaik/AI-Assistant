@@ -10,7 +10,8 @@ from .nodes import (
     summarize_email_node,
     show_email_node,
     draft_reply_node,
-    send_draft_node
+    send_draft_node,
+    approve_send_node
 )
 
 builder = StateGraph(AgentState)
@@ -23,6 +24,7 @@ builder.add_node("draft_reply", draft_reply_node)
 builder.add_node("send_draft", send_draft_node)
 builder.add_node("summarize_email", summarize_email_node)
 builder.add_node("show_email", show_email_node)
+builder.add_node("approve_send",approve_send_node)
 
 
 def route_decision(state: AgentState):
@@ -41,6 +43,7 @@ builder.add_conditional_edges(
         "show": "read_email",
         "reply": "read_email",
         "send": "send_draft",
+        "approve": "approve_send",
         "chat": "chat"
     }
 )
@@ -59,6 +62,7 @@ builder.add_edge("summarize_email", END)
 builder.add_edge("show_email", END)
 builder.add_edge("draft_reply", END)
 builder.add_edge("send_draft", END)
+builder.add_edge("approve_send", END)
 builder.add_edge("chat", END)
 
 graph = builder.compile()

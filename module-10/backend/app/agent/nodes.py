@@ -1,4 +1,4 @@
-from app.gmail.service import get_latest_email
+from app.gmail.service import get_latest_email, send_email
 from .state import AgentState
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
@@ -40,6 +40,11 @@ def router_node(state: AgentState):
     if "send" in message:
         return {
             "route": "send"
+        }
+    
+    if "approve" in message:
+        return {
+            "route": "approve"
         }
 
     return {
@@ -151,5 +156,26 @@ def send_draft_node(state: AgentState):
         Body:
         {draft['body']}
         """
+    }
+
+def approve_send_node(state: AgentState):
+
+    if not draft_store.current_draft:
+        return {
+            "response": "No draft available."
+        }
+
+    draft = draft_store.current_draft
+
+    send_email(
+        to=draft["to"],
+        subject=draft["subject"],
+        body=draft["body"]
+    )
+
+    draft_store.current_draft = None
+
+    return {
+        "response": "Email sent successfully."
     }
 

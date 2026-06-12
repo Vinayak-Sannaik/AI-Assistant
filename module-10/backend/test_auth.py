@@ -61,22 +61,24 @@ from app.agent.graph import graph
 #     "message": "reply professionally"
 # }))
 
-# print(
-#     graph.invoke({
-#         "message": "reply professionally"
-#     })
-# )
-
-# print(
-#     graph.invoke({
-#         "message": "send it"
-#     })
-# )
-
-from app.gmail.service import send_email
-
-send_email(
-    to="vinayakpsannaik@gmail.com",
-    subject="Test Email",
-    body="Hello from AI Email Assistant"
+print(
+    graph.invoke({
+        "message": "reply professionally"
+    })
 )
+
+print(
+    graph.invoke({
+        "message": "send it"
+    })
+)
+
+print(graph.invoke({"message": "approve"}))
+
+# from app.gmail.service import send_email
+
+# send_email(
+#     to="vinayakpsannaik@gmail.com",
+#     subject="Test Email",
+#     body="Hello from AI Email Assistant"
+# )
