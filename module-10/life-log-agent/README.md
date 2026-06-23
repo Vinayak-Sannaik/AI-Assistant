@@ -1,6 +1,6 @@
-# 🧠 Life Log Agent
+# Life Log Agent
 
-A simple AI agent built with Python that demonstrates different memory architectures used in modern LLM applications.
+AI agent built with Python that demonstrates different memory architectures used in modern LLM applications.
 
 Instead of being a stateless chatbot, the agent can:
 
@@ -8,8 +8,6 @@ Instead of being a stateless chatbot, the agent can:
 * Store long-term user facts (Semantic Memory)
 * Retrieve relevant facts using vector similarity search
 * Generate high-level reflections from conversations
-
-The project is intentionally kept small and framework-light to understand the underlying concepts.
 
 ---
 
