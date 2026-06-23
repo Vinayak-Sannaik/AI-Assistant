@@ -317,9 +317,3 @@ This project demonstrates:
 * ChromaDB or pgvector integration
 * Streaming responses
 * Web search tool integration
-
----
-
-# License
-
-This project is intended for learning and educational purposes.
